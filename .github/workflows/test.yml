@@ -21,6 +21,4 @@ jobs:
         run: pip install -e ".[test]"
 
       - name: Run tests
-        env:
-          TOCHKA_TOKEN: ${{ secrets.TOCHKA_TOKEN }}
         run: pytest tests/ -v

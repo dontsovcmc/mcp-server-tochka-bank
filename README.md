@@ -25,41 +25,13 @@ All data stays on your machine — the token never leaves your computer.
 
 Goods are stored locally in `~/.config/mcp-server-tochka-bank/goods.json`.
 
-## Installation
-
-### Claude Code
-
-```bash
-claude mcp add tochka-bank \
-  -e TOCHKA_TOKEN=your_jwt_token \
-  -- python -m mcp_server_tochka_bank
-```
-
-### Claude Desktop
-
-Add to `claude_desktop_config.json`:
-
-```json
-{
-  "mcpServers": {
-    "tochka-bank": {
-      "command": "python",
-      "args": ["-m", "mcp_server_tochka_bank"],
-      "env": {
-        "TOCHKA_TOKEN": "your_jwt_token"
-      }
-    }
-  }
-}
-```
-
-### From PyPI (when published)
+## Установка
 
 ```bash
 pip install mcp-server-tochka-bank
 ```
 
-### From source
+Или из исходников:
 
 ```bash
 git clone https://github.com/dontsovcmc/mcp-server-tochka-bank.git
@@ -67,18 +39,50 @@ cd mcp-server-tochka-bank
 pip install -e .
 ```
 
-## Getting TOCHKA_TOKEN
+## Настройка
 
-1. Log in to [Tochka internet bank](https://i.tochka.com)
-2. Go to Settings → API → Generate JWT token
-3. Copy the token
+### Шаг 1. Получить JWT-токен в банке Точка
 
-## Running tests
+1. Войдите в [интернет-банк Точка](https://i.tochka.com)
+2. Перейдите в **Настройки** → **Интеграции и API**
+3. Нажмите **«Создать токен»** (JWT)
+4. Выберите разрешения:
+   - `ReadAccountsBasic` — информация о счетах
+   - `ReadBalances` — баланс
+   - `ReadStatements` — выписки
+   - `CreatePaymentForSign` — создание платежей
+   - `ManageInvoiceData` — счета и закрывающие документы
+5. Скопируйте сгенерированный токен
 
+### Шаг 2. Подключить MCP-сервер
+
+**Claude Code:**
 ```bash
-pip install -e ".[test]"
-TOCHKA_TOKEN=your_token pytest tests/ -v
+claude mcp add tochka-bank \
+  -e TOCHKA_TOKEN=ваш_токен \
+  -- python -m mcp_server_tochka_bank
 ```
+
+**Claude Desktop** — добавьте в `claude_desktop_config.json`:
+```json
+{
+  "mcpServers": {
+    "tochka-bank": {
+      "command": "python",
+      "args": ["-m", "mcp_server_tochka_bank"],
+      "env": {
+        "TOCHKA_TOKEN": "ваш_токен"
+      }
+    }
+  }
+}
+```
+
+Токен хранится только на вашем компьютере и передаётся серверу через переменную окружения.
+
+### Шаг 3. Проверить
+
+Попросите Claude: *«покажи баланс в банке Точка»* — он вызовет `tochka_balance`.
 
 ## License
 
