@@ -1,43 +1,29 @@
 # mcp-server-tochka-bank
 
-MCP server for [Tochka Bank API](https://developers.tochka.com/docs/tochka-api/). Works with Claude Code, Claude Desktop, and any MCP-compatible client.
+MCP-сервер для работы с [API банка Точка](https://developers.tochka.com/docs/tochka-api/) через Claude Code, Claude Desktop и другие MCP-совместимые клиенты.
 
-All data stays on your machine — the token never leaves your computer.
+Все данные остаются на вашем компьютере — токен никуда не передаётся.
 
-## Tools
+## Возможности
 
-### Bank operations
-| Tool | Description |
-|------|-------------|
-| `tochka_balance` | Get account balance |
-| `tochka_payment` | Create outgoing payment (I pay someone), get signing URL |
-| `tochka_invoice` | Issue invoice to a buyer (they pay me) |
-| `tochka_download_invoice` | Download invoice PDF |
-| `tochka_upd` | Create UPD (universal transfer document), get signing URL |
-| `tochka_search` | Search transactions by counterparty INN or name |
+### Банковские операции
+| Инструмент | Описание |
+|------------|----------|
+| `tochka_balance` | Баланс счёта |
+| `tochka_payment` | Создать исходящий платёж (я плачу кому-то), получить ссылку на подпись |
+| `tochka_invoice` | Выставить счёт покупателю (мне платят) |
+| `tochka_download_invoice` | Скачать PDF счёта |
+| `tochka_upd` | Создать УПД (универсальный передаточный документ), получить ссылку на подпись |
+| `tochka_search` | Поиск операций по ИНН или названию контрагента |
 
-### Local goods catalog
-| Tool | Description |
-|------|-------------|
-| `goods_list` | List all goods |
-| `goods_add` | Add a good (name, unit, price) |
-| `goods_remove` | Remove a good by name |
+### Локальный справочник товаров
+| Инструмент | Описание |
+|------------|----------|
+| `goods_list` | Список всех товаров |
+| `goods_add` | Добавить товар (название, единица измерения, цена) |
+| `goods_remove` | Удалить товар по названию |
 
-Goods are stored locally in `~/.config/mcp-server-tochka-bank/goods.json`.
-
-## Установка
-
-```bash
-pip install mcp-server-tochka-bank
-```
-
-Или из исходников:
-
-```bash
-git clone https://github.com/dontsovcmc/mcp-server-tochka-bank.git
-cd mcp-server-tochka-bank
-pip install -e .
-```
+Товары хранятся локально в `~/.config/mcp-server-tochka-bank/goods.json`.
 
 ## Настройка
 
@@ -84,6 +70,15 @@ claude mcp add tochka-bank \
 
 Попросите Claude: *«покажи баланс в банке Точка»* — он вызовет `tochka_balance`.
 
-## License
+## Примеры
+
+- «покажи баланс» → `tochka_balance`
+- «выстави счёт ООО Рога и Копыта на 15 000 ₽» → `tochka_invoice`
+- «создай УПД к этому счёту» → `tochka_upd`
+- «оплати по реквизитам ...» → `tochka_payment`
+- «найди все операции с ИНН 7700000000» → `tochka_search`
+- «добавь товар: Виджет, шт., 500.00» → `goods_add`
+
+## Лицензия
 
 MIT
