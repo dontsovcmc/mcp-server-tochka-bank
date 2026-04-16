@@ -41,9 +41,13 @@ src/mcp_server_tochka_bank/
 ### Правила
 
 - **CRITICAL: НИКОГДА не коммить в master!** Все коммиты — только в рабочую ветку.
+- **Все изменения — через Pull Request в master.** Создать ветку, закоммитить, сделать rebase на свежий master, запушить, создать PR.
+- **MANDATORY BEFORE EVERY `git push`: rebase onto fresh master:**
+  ```bash
+  git checkout master && git remote update && git pull && git checkout - && git rebase master
+  ```
 - **NEVER use `git stash`.**
 - **NEVER use merge commits. ALWAYS rebase.**
-- **MANDATORY BEFORE EVERY `git push`: rebase onto fresh master.**
 - Не хардкодить токены и секреты в коде.
 - stdout в MCP сервере занят JSON-RPC — для логов использовать только stderr.
 - **ПЕРЕД КАЖДЫМ КОММИТОМ** проверять все исходные файлы, тесты и документацию на наличие реальных персональных данных (ИНН, номера счетов, имена, адреса, телефоны, email). Заменять на вымышленные.
