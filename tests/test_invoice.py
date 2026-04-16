@@ -9,7 +9,7 @@ from mcp.shared.memory import create_connected_server_and_client_session
 
 from mcp_server_tochka_bank.server import mcp
 
-MOCK_ACCOUNT = {"accountId": "40802810301500047679/044525104", "customerCode": "301674971", "status": "Enabled"}
+MOCK_ACCOUNT = {"accountId": "40702810100000000001/044525000", "customerCode": "100000001", "status": "Enabled"}
 
 MOCK_INVOICE_RESPONSE = {"Data": {"documentId": "fbc0e703-248d-4083-bfaa-7061e8bc4b18"}}
 

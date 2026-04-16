@@ -9,11 +9,11 @@ from mcp.types import TextContent
 
 from mcp_server_tochka_bank.server import mcp
 
-MOCK_ACCOUNTS = [{"accountId": "40802810301500047679/044525104", "customerCode": "301674971", "status": "Enabled", "currency": "RUB"}]
+MOCK_ACCOUNTS = [{"accountId": "40702810100000000001/044525000", "customerCode": "100000001", "status": "Enabled", "currency": "RUB"}]
 
 MOCK_BALANCES = [
-    {"accountId": "40802810301500047679/044525104", "type": "ClosingAvailable", "creditDebitIndicator": "Credit", "dateTime": "2026-04-16T10:00:00+00:00", "Amount": {"amount": 425954.81, "currency": "RUB"}},
-    {"accountId": "40802810301500047679/044525104", "type": "Expected", "creditDebitIndicator": "Credit", "dateTime": "2026-04-16T10:00:00+00:00", "Amount": {"amount": 0.0, "currency": "RUB"}},
+    {"accountId": "40702810100000000001/044525000", "type": "ClosingAvailable", "creditDebitIndicator": "Credit", "dateTime": "2026-04-16T10:00:00+00:00", "Amount": {"amount": 50000.00, "currency": "RUB"}},
+    {"accountId": "40702810100000000001/044525000", "type": "Expected", "creditDebitIndicator": "Credit", "dateTime": "2026-04-16T10:00:00+00:00", "Amount": {"amount": 0.0, "currency": "RUB"}},
 ]
 
 
@@ -28,6 +28,6 @@ async def test_tochka_balance():
             result = await session.call_tool("tochka_balance", {})
             assert not result.isError
             data = json.loads(result.content[0].text)
-            assert data["accountId"] == "40802810301500047679/044525104"
+            assert data["accountId"] == "40702810100000000001/044525000"
             assert len(data["balances"]) == 2
-            assert data["balances"][0]["amount"] == 425954.81
+            assert data["balances"][0]["amount"] == 50000.00

@@ -8,7 +8,7 @@ from mcp.shared.memory import create_connected_server_and_client_session
 
 from mcp_server_tochka_bank.server import mcp
 
-MOCK_ACCOUNT = {"accountId": "40802810301500047679/044525104", "customerCode": "301674971", "status": "Enabled"}
+MOCK_ACCOUNT = {"accountId": "40702810100000000001/044525000", "customerCode": "100000001", "status": "Enabled"}
 
 MOCK_STATEMENT = {
     "status": "Ready",
@@ -19,8 +19,8 @@ MOCK_STATEMENT = {
             "Amount": {"amount": 5290.0, "currency": "RUB"},
             "description": "Оплата по счёту №140",
             "documentNumber": "123",
-            "DebtorParty": {"inn": "5406995130", "name": "ООО АКАДЕМИЯ УЧЕТА"},
-            "CreditorParty": {"inn": "772791100524", "name": "ИП Донцов"},
+            "DebtorParty": {"inn": "770000000002", "name": "ООО Рога и Копыта"},
+            "CreditorParty": {"inn": "770000000001", "name": "ИП Иванов"},
         },
         {
             "documentProcessDate": "2026-04-11",
@@ -28,7 +28,7 @@ MOCK_STATEMENT = {
             "Amount": {"amount": 500.0, "currency": "RUB"},
             "description": "Оплата СДЭК",
             "documentNumber": "456",
-            "DebtorParty": {"inn": "772791100524", "name": "ИП Донцов"},
+            "DebtorParty": {"inn": "770000000001", "name": "ИП Иванов"},
             "CreditorParty": {"inn": "7700000001", "name": "ООО СДЭК"},
         },
     ],
@@ -45,13 +45,13 @@ async def test_tochka_search_by_inn():
 
         async with create_connected_server_and_client_session(mcp._mcp_server) as session:
             result = await session.call_tool("tochka_search", {
-                "query": "5406995130",
+                "query": "770000000002",
                 "days": 30,
             })
             assert not result.isError
             data = json.loads(result.content[0].text)
             assert data["total"] == 1
-            assert data["transactions"][0]["debtor"]["inn"] == "5406995130"
+            assert data["transactions"][0]["debtor"]["inn"] == "770000000002"
 
 
 @pytest.mark.anyio

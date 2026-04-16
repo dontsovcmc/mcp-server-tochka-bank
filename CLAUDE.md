@@ -5,7 +5,6 @@
 ### Запуск из исходников
 
 ```bash
-cd /Users/dontsov/CODE/mcp-server-tochka-bank
 pip install -e ".[test]"
 ```
 
