@@ -42,14 +42,26 @@ MCP-сервер для работы с [API банка Точка](https://deve
 
 ### Шаг 2. Подключить MCP-сервер
 
-**Claude Code:**
+**Claude Code** (CLI в терминале):
 ```bash
 claude mcp add tochka-bank \
   -e TOCHKA_TOKEN=ваш_токен \
   -- python -m mcp_server_tochka_bank
 ```
 
-**Claude Desktop** — добавьте в `claude_desktop_config.json`:
+Для удаления:
+```bash
+claude mcp remove tochka-bank
+```
+
+**Claude Desktop** (десктопное приложение) — добавьте в файл `claude_desktop_config.json`:
+
+| ОС | Путь к файлу |
+|----|-------------|
+| macOS | `~/Library/Application Support/Claude/claude_desktop_config.json` |
+| Windows | `%APPDATA%\Claude\claude_desktop_config.json` |
+| Linux | `~/.config/Claude/claude_desktop_config.json` |
+
 ```json
 {
   "mcpServers": {
@@ -63,6 +75,8 @@ claude mcp add tochka-bank \
   }
 }
 ```
+
+Для удаления — удалите блок `"tochka-bank"` из файла.
 
 Токен хранится только на вашем компьютере и передаётся серверу через переменную окружения.
 
