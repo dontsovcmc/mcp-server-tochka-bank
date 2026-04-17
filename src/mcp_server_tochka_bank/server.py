@@ -9,6 +9,7 @@ from datetime import date, timedelta
 from mcp.server.fastmcp import FastMCP
 
 from .goods import add_good, find_good, list_goods, remove_good
+from .invoice_tracker import add_invoice, list_invoices, remove_invoice
 from .tochka_api import TochkaAPI
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s", stream=sys.stderr)
@@ -343,3 +344,97 @@ def tochka_search(query: str, days: int = 90) -> str:
         "transactions": matches,
     }
     return json.dumps(result, ensure_ascii=False)
+
+
+# ── Invoice Tracker ─────────────────────────────────────────────────
+
+
+@mcp.tool()
+def tochka_track_invoice(buyer_inn: str, buyer_name: str, amount: str, description: str) -> str:
+    """Start tracking an invoice for payment. Persists across sessions.
+
+    Args:
+        buyer_inn: Buyer INN (who should pay)
+        buyer_name: Buyer company name
+        amount: Expected payment amount (e.g. "5290.00")
+        description: Invoice description (e.g. "Счёт №140 от 2026-04-10")
+    """
+    item = add_invoice(buyer_inn, buyer_name, amount, description)
+    return json.dumps(item, ensure_ascii=False)
+
+
+@mcp.tool()
+def tochka_untrack_invoice(invoice_id: str) -> str:
+    """Stop tracking an invoice by its id.
+
+    Args:
+        invoice_id: Invoice tracker id (from tochka_track_invoice or tochka_pending_invoices)
+    """
+    item = remove_invoice(invoice_id)
+    return json.dumps({"removed": item}, ensure_ascii=False)
+
+
+@mcp.tool()
+def tochka_pending_invoices() -> str:
+    """List all invoices being tracked for payment.
+
+    Returns JSON array of pending invoices with id, buyer_inn, buyer_name, amount, description, created_at.
+    """
+    return json.dumps(list_invoices(), ensure_ascii=False)
+
+
+@mcp.tool()
+def tochka_check_invoices(days: int = 30) -> str:
+    """Check all pending invoices against bank statement. Auto-removes paid ones.
+
+    Match criteria (all must be true):
+    - Incoming (Credit) transaction
+    - Debtor INN matches buyer_inn
+    - Transaction date >= invoice created_at
+    - abs(transaction amount - invoice amount) <= 1 ruble
+
+    Args:
+        days: Statement depth in days (default 30)
+    """
+    pending = list_invoices()
+    if not pending:
+        return json.dumps({"paid": [], "pending": []}, ensure_ascii=False)
+
+    api = _get_api()
+    acc = _get_account(api)
+    account_id = acc["accountId"]
+
+    end = date.today()
+    start = end - timedelta(days=days)
+
+    statement_id = api.init_statement(account_id, start.isoformat(), end.isoformat())
+    statement = api.get_statement_ready(account_id, statement_id)
+    transactions = statement.get("Transaction", [])
+
+    paid = []
+    still_pending = []
+
+    for inv in pending:
+        found = False
+        for tx in transactions:
+            if tx.get("creditDebitIndicator") != "Credit":
+                continue
+            debtor_inn = tx.get("DebtorParty", {}).get("inn", "")
+            if debtor_inn != inv["buyer_inn"]:
+                continue
+            tx_date = tx.get("documentProcessDate", "")
+            if tx_date < inv["created_at"]:
+                continue
+            tx_amount = float(tx.get("Amount", {}).get("amount", 0))
+            if abs(tx_amount - float(inv["amount"])) <= 1:
+                found = True
+                break
+        if found:
+            paid.append(inv)
+        else:
+            still_pending.append(inv)
+
+    for inv in paid:
+        remove_invoice(inv["id"])
+
+    return json.dumps({"paid": paid, "pending": still_pending}, ensure_ascii=False)
