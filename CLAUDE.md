@@ -2,7 +2,7 @@
 
 ## Разработка
 
-Подробная инструкция по разработке и диагностике: [development.md](development.md)
+**CRITICAL: Все правила разработки описаны в [development.md](development.md). Всегда следовать им при любых изменениях кода, тестов и документации.**
 
 ### Запуск из исходников
 
@@ -57,6 +57,7 @@ src/mcp_server_tochka_bank/
 
 - **CRITICAL: НИКОГДА не коммить в master!** Все коммиты — только в рабочую ветку.
 - **Все изменения — через Pull Request в master.** Создать ветку, закоммитить, сделать rebase на свежий master, запушить, создать PR.
+- **ПЕРЕД КОММИТОМ проверить, не слита ли текущая ветка в master.** Если ветка уже слита (merged) — создать новую ветку от свежего master и делать новый PR. Никогда не пушить в уже слитую ветку.
 - **MANDATORY BEFORE EVERY `git push`: rebase onto fresh master:**
   ```bash
   git checkout master && git remote update && git pull && git checkout - && git rebase master
