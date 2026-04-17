@@ -24,10 +24,11 @@ def list_invoices() -> list:
     return _load()
 
 
-def add_invoice(number: str, buyer_inn: str, buyer_name: str, amount: str, description: str) -> dict:
+def add_invoice(number: str, buyer_inn: str, buyer_name: str, amount: str, description: str, document_id: str = "") -> dict:
     invoices = _load()
     item = {
         "number": number,
+        "document_id": document_id,
         "buyer_inn": buyer_inn,
         "buyer_name": buyer_name,
         "amount": amount,

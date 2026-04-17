@@ -176,6 +176,11 @@ class TochkaAPI:
             payload["Data"]["documentId"] = parent_document_id
         return self._post("/invoice/v1.0/closing-documents", payload)
 
+    # --- Статус оплаты счёта ---
+
+    def get_invoice_payment_status(self, customer_code: str, document_id: str) -> dict:
+        return self._get(f"/invoice/v1.0/bills/{customer_code}/{document_id}/payment-status")
+
     # --- Выписки ---
 
     def init_statement(self, account_id: str, start_date: str, end_date: str) -> str:

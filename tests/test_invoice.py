@@ -7,11 +7,19 @@ from unittest.mock import patch
 import pytest
 from mcp.shared.memory import create_connected_server_and_client_session
 
+from mcp_server_tochka_bank import invoice_tracker
 from mcp_server_tochka_bank.server import mcp
 
 MOCK_ACCOUNT = {"accountId": "40702810100000000001/044525000", "customerCode": "100000001", "status": "Enabled"}
 
 MOCK_INVOICE_RESPONSE = {"Data": {"documentId": "fbc0e703-248d-4083-bfaa-7061e8bc4b18"}}
+
+
+@pytest.fixture(autouse=True)
+def temp_invoices_file(monkeypatch, tmp_path):
+    path = str(tmp_path / "pending_invoices.json")
+    monkeypatch.setattr(invoice_tracker, "INVOICES_PATH", path)
+    return path
 
 
 @pytest.mark.anyio
@@ -41,6 +49,14 @@ async def test_tochka_invoice():
             assert not result.isError
             data = json.loads(result.content[0].text)
             assert data["documentId"] == "fbc0e703-248d-4083-bfaa-7061e8bc4b18"
+
+            # Проверяем что счёт автоматически добавлен в трекер
+            result = await session.call_tool("tochka_pending_invoices", {})
+            pending = json.loads(result.content[0].text)
+            assert len(pending) == 1
+            assert pending[0]["number"] == "999"
+            assert pending[0]["document_id"] == "fbc0e703-248d-4083-bfaa-7061e8bc4b18"
+            assert pending[0]["buyer_inn"] == "7700000000"
 
 
 @pytest.mark.anyio

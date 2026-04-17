@@ -204,7 +204,10 @@ def tochka_invoice(
         comment=comment,
         payment_expiry_date=pay_until_date,
     )
-    return json.dumps(data.get("Data", {}), ensure_ascii=False)
+    result = data.get("Data", {})
+    document_id = result.get("documentId", "")
+    add_invoice(number, buyer_inn, buyer_name, total, f"Счёт №{number}", document_id)
+    return json.dumps(result, ensure_ascii=False)
 
 
 # ── Download Invoice ─────────────────────────────────────────────────
@@ -350,7 +353,7 @@ def tochka_search(query: str, days: int = 90) -> str:
 
 
 @mcp.tool()
-def tochka_track_invoice(number: str, buyer_inn: str, buyer_name: str, amount: str, description: str) -> str:
+def tochka_track_invoice(number: str, buyer_inn: str, buyer_name: str, amount: str, description: str, document_id: str = "") -> str:
     """Start tracking an invoice for payment. Persists across sessions.
 
     Args:
@@ -359,8 +362,9 @@ def tochka_track_invoice(number: str, buyer_inn: str, buyer_name: str, amount: s
         buyer_name: Buyer company name
         amount: Expected payment amount (e.g. "5290.00")
         description: Invoice description (e.g. "Счёт №140 от 2026-04-10")
+        document_id: Tochka documentId UUID (optional, for invoices created via tochka_invoice)
     """
-    item = add_invoice(number, buyer_inn, buyer_name, amount, description)
+    item = add_invoice(number, buyer_inn, buyer_name, amount, description, document_id)
     return json.dumps(item, ensure_ascii=False)
 
 
@@ -386,16 +390,20 @@ def tochka_pending_invoices() -> str:
 
 @mcp.tool()
 def tochka_check_invoices(days: int = 30) -> str:
-    """Check all pending invoices against bank statement. Auto-removes paid ones.
+    """Check all pending invoices for payment. Auto-removes paid ones.
 
-    Match criteria (all must be true):
+    Two strategies:
+    - With document_id: uses Tochka payment-status API (fast, exact)
+    - Without document_id: searches bank statement by buyer INN + amount (fallback)
+
+    Fallback match criteria (all must be true):
     - Incoming (Credit) transaction
     - Debtor INN matches buyer_inn
     - Transaction date >= invoice created_at
     - abs(transaction amount - invoice amount) <= 1 ruble
 
     Args:
-        days: Statement depth in days (default 30)
+        days: Statement depth in days for fallback (default 30)
     """
     pending = list_invoices()
     if not pending:
@@ -404,36 +412,54 @@ def tochka_check_invoices(days: int = 30) -> str:
     api = _get_api()
     acc = _get_account(api)
     account_id = acc["accountId"]
-
-    end = date.today()
-    start = end - timedelta(days=days)
-
-    statement_id = api.init_statement(account_id, start.isoformat(), end.isoformat())
-    statement = api.get_statement_ready(account_id, statement_id)
-    transactions = statement.get("Transaction", [])
+    customer_code = acc.get("customerCode", "")
 
     paid = []
-    still_pending = []
+    need_statement = []
 
+    # Стратегия 1: payment-status API для счетов с document_id
     for inv in pending:
-        found = False
-        for tx in transactions:
-            if tx.get("creditDebitIndicator") != "Credit":
-                continue
-            debtor_inn = tx.get("DebtorParty", {}).get("inn", "")
-            if debtor_inn != inv["buyer_inn"]:
-                continue
-            tx_date = tx.get("documentProcessDate", "")
-            if tx_date < inv["created_at"]:
-                continue
-            tx_amount = float(tx.get("Amount", {}).get("amount", 0))
-            if abs(tx_amount - float(inv["amount"])) <= 1:
-                found = True
-                break
-        if found:
-            paid.append(inv)
+        if inv.get("document_id"):
+            try:
+                status_data = api.get_invoice_payment_status(customer_code, inv["document_id"])
+                status = status_data.get("Data", {}).get("status", "")
+                if status.lower() in ("paid", "оплачен"):
+                    paid.append(inv)
+                else:
+                    need_statement.append(inv)
+            except Exception:
+                need_statement.append(inv)
         else:
-            still_pending.append(inv)
+            need_statement.append(inv)
+
+    # Стратегия 2: fallback через выписку для счетов без document_id
+    still_pending = []
+    if need_statement:
+        end = date.today()
+        start = end - timedelta(days=days)
+        statement_id = api.init_statement(account_id, start.isoformat(), end.isoformat())
+        statement = api.get_statement_ready(account_id, statement_id)
+        transactions = statement.get("Transaction", [])
+
+        for inv in need_statement:
+            found = False
+            for tx in transactions:
+                if tx.get("creditDebitIndicator") != "Credit":
+                    continue
+                debtor_inn = tx.get("DebtorParty", {}).get("inn", "")
+                if debtor_inn != inv["buyer_inn"]:
+                    continue
+                tx_date = tx.get("documentProcessDate", "")
+                if tx_date < inv["created_at"]:
+                    continue
+                tx_amount = float(tx.get("Amount", {}).get("amount", 0))
+                if abs(tx_amount - float(inv["amount"])) <= 1:
+                    found = True
+                    break
+            if found:
+                paid.append(inv)
+            else:
+                still_pending.append(inv)
 
     for inv in paid:
         remove_invoice(inv["number"])

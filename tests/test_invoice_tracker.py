@@ -223,3 +223,77 @@ async def test_check_invoices_wrong_inn_not_matched():
             data = json.loads(result.content[0].text)
             assert len(data["paid"]) == 0
             assert len(data["pending"]) == 1
+
+
+@pytest.mark.anyio
+async def test_check_invoices_payment_status_api():
+    """Счёт с document_id проверяется через payment-status API."""
+    async with create_connected_server_and_client_session(mcp._mcp_server) as session:
+        await session.call_tool("tochka_track_invoice", {
+            "number": "146",
+            "buyer_inn": "770000000002",
+            "buyer_name": "ООО Рога и Копыта",
+            "amount": "5290.00",
+            "description": "Счёт №146",
+            "document_id": "abc-123-def",
+        })
+
+        with patch("mcp_server_tochka_bank.server.TochkaAPI") as MockAPI:
+            instance = MockAPI.return_value
+            instance.get_first_account.return_value = MOCK_ACCOUNT
+            instance.get_invoice_payment_status.return_value = {
+                "Data": {"status": "paid"}
+            }
+
+            result = await session.call_tool("tochka_check_invoices", {"days": 30})
+            data = json.loads(result.content[0].text)
+            assert len(data["paid"]) == 1
+            assert data["paid"][0]["number"] == "146"
+            assert len(data["pending"]) == 0
+
+            # payment-status вызван, выписка НЕ запрашивалась
+            instance.get_invoice_payment_status.assert_called_once_with("100000001", "abc-123-def")
+            instance.init_statement.assert_not_called()
+
+
+@pytest.mark.anyio
+async def test_check_invoices_fallback_without_document_id():
+    """Счёт без document_id проверяется через выписку (fallback)."""
+    async with create_connected_server_and_client_session(mcp._mcp_server) as session:
+        await session.call_tool("tochka_track_invoice", {
+            "number": "147",
+            "buyer_inn": "770000000002",
+            "buyer_name": "ООО Рога и Копыта",
+            "amount": "5290.00",
+            "description": "Счёт №147",
+        })
+
+        mock_statement = {
+            "status": "Ready",
+            "Transaction": [
+                {
+                    "documentProcessDate": TODAY,
+                    "creditDebitIndicator": "Credit",
+                    "Amount": {"amount": 5290.0, "currency": "RUB"},
+                    "description": "Оплата по счёту №147",
+                    "documentNumber": "200",
+                    "DebtorParty": {"inn": "770000000002", "name": "ООО Рога и Копыта"},
+                    "CreditorParty": {"inn": "770000000001", "name": "ИП Иванов"},
+                },
+            ],
+        }
+
+        with patch("mcp_server_tochka_bank.server.TochkaAPI") as MockAPI:
+            instance = MockAPI.return_value
+            instance.get_first_account.return_value = MOCK_ACCOUNT
+            instance.init_statement.return_value = "stmt-456"
+            instance.get_statement_ready.return_value = mock_statement
+
+            result = await session.call_tool("tochka_check_invoices", {"days": 30})
+            data = json.loads(result.content[0].text)
+            assert len(data["paid"]) == 1
+            assert data["paid"][0]["number"] == "147"
+
+            # payment-status НЕ вызван, выписка запрашивалась
+            instance.get_invoice_payment_status.assert_not_called()
+            instance.init_statement.assert_called_once()
