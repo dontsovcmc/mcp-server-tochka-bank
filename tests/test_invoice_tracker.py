@@ -36,6 +36,7 @@ async def test_pending_invoices_empty():
 async def test_track_and_list():
     async with create_connected_server_and_client_session(mcp._mcp_server) as session:
         result = await session.call_tool("tochka_track_invoice", {
+            "number": "140",
             "buyer_inn": "770000000002",
             "buyer_name": "ООО Рога и Копыта",
             "amount": "5290.00",
@@ -45,7 +46,7 @@ async def test_track_and_list():
         item = json.loads(result.content[0].text)
         assert item["buyer_inn"] == "770000000002"
         assert item["amount"] == "5290.00"
-        assert "id" in item
+        assert item["number"] == "140"
 
         result = await session.call_tool("tochka_pending_invoices", {})
         data = json.loads(result.content[0].text)
@@ -57,6 +58,7 @@ async def test_track_and_list():
 async def test_untrack_invoice():
     async with create_connected_server_and_client_session(mcp._mcp_server) as session:
         result = await session.call_tool("tochka_track_invoice", {
+            "number": "140",
             "buyer_inn": "770000000002",
             "buyer_name": "ООО Рога и Копыта",
             "amount": "5290.00",
@@ -64,7 +66,7 @@ async def test_untrack_invoice():
         })
         item = json.loads(result.content[0].text)
 
-        result = await session.call_tool("tochka_untrack_invoice", {"invoice_id": item["id"]})
+        result = await session.call_tool("tochka_untrack_invoice", {"number": item["number"]})
         assert not result.isError
 
         result = await session.call_tool("tochka_pending_invoices", {})
@@ -77,6 +79,7 @@ async def test_check_invoices_found_paid():
     """Платёж найден в выписке — счёт переходит в paid и удаляется из pending."""
     async with create_connected_server_and_client_session(mcp._mcp_server) as session:
         result = await session.call_tool("tochka_track_invoice", {
+            "number": "140",
             "buyer_inn": "770000000002",
             "buyer_name": "ООО Рога и Копыта",
             "amount": "5290.00",
@@ -109,7 +112,7 @@ async def test_check_invoices_found_paid():
             assert not result.isError
             data = json.loads(result.content[0].text)
             assert len(data["paid"]) == 1
-            assert data["paid"][0]["id"] == item["id"]
+            assert data["paid"][0]["number"] == item["number"]
             assert len(data["pending"]) == 0
 
         # Проверяем, что счёт удалён из файла
@@ -123,6 +126,7 @@ async def test_check_invoices_not_paid():
     """Платёж не найден — счёт остаётся в pending."""
     async with create_connected_server_and_client_session(mcp._mcp_server) as session:
         await session.call_tool("tochka_track_invoice", {
+            "number": "140",
             "buyer_inn": "770000000002",
             "buyer_name": "ООО Рога и Копыта",
             "amount": "5290.00",
@@ -149,6 +153,7 @@ async def test_check_invoices_amount_tolerance():
     """Платёж с разницей < 1 руб. считается оплатой."""
     async with create_connected_server_and_client_session(mcp._mcp_server) as session:
         await session.call_tool("tochka_track_invoice", {
+            "number": "140",
             "buyer_inn": "770000000002",
             "buyer_name": "ООО Рога и Копыта",
             "amount": "5290.00",
@@ -186,6 +191,7 @@ async def test_check_invoices_wrong_inn_not_matched():
     """Платёж от другого ИНН не считается оплатой."""
     async with create_connected_server_and_client_session(mcp._mcp_server) as session:
         await session.call_tool("tochka_track_invoice", {
+            "number": "140",
             "buyer_inn": "770000000002",
             "buyer_name": "ООО Рога и Копыта",
             "amount": "5290.00",

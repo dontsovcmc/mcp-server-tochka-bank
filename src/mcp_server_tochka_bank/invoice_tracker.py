@@ -2,7 +2,6 @@
 
 import json
 import os
-import uuid
 from datetime import date
 
 INVOICES_PATH = os.path.expanduser("~/.config/mcp-server-tochka-bank/pending_invoices.json")
@@ -25,10 +24,10 @@ def list_invoices() -> list:
     return _load()
 
 
-def add_invoice(buyer_inn: str, buyer_name: str, amount: str, description: str) -> dict:
+def add_invoice(number: str, buyer_inn: str, buyer_name: str, amount: str, description: str) -> dict:
     invoices = _load()
     item = {
-        "id": uuid.uuid4().hex[:12],
+        "number": number,
         "buyer_inn": buyer_inn,
         "buyer_name": buyer_name,
         "amount": amount,
@@ -40,11 +39,11 @@ def add_invoice(buyer_inn: str, buyer_name: str, amount: str, description: str) 
     return item
 
 
-def remove_invoice(invoice_id: str) -> dict:
+def remove_invoice(number: str) -> dict:
     invoices = _load()
-    found = [i for i in invoices if i["id"] == invoice_id]
+    found = [i for i in invoices if i["number"] == number]
     if not found:
-        raise RuntimeError(f"Счёт с id '{invoice_id}' не найден")
-    invoices = [i for i in invoices if i["id"] != invoice_id]
+        raise RuntimeError(f"Счёт '{number}' не найден")
+    invoices = [i for i in invoices if i["number"] != number]
     _save(invoices)
     return found[0]
