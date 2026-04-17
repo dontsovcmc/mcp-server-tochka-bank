@@ -67,6 +67,23 @@ src/mcp_server_tochka_bank/
 
 Если найдено несколько разных получателей — покажи список и спроси какого именно. Если получатель не найден — попроси полные реквизиты.
 
+### Обновление MCP-сервера
+
+Когда пользователь просит "обнови mcp tochka-bank":
+
+1. Определить способ установки:
+   ```bash
+   which mcp-server-tochka-bank && pip show mcp-server-tochka-bank
+   ```
+2. Обновить пакет:
+   - **pip:** `pip install --upgrade mcp-server-tochka-bank`
+   - **uvx:** `uvx --upgrade mcp-server-tochka-bank`
+3. Проверить версию:
+   ```bash
+   mcp-server-tochka-bank --version 2>/dev/null || python -c "import mcp_server_tochka_bank; print(mcp_server_tochka_bank.__version__)"
+   ```
+4. Сообщить пользователю новую версию и попросить перезапустить Claude Code (MCP-серверы перезапускаются при рестарте).
+
 ### Правила
 
 - **CRITICAL: НИКОГДА не коммить в master!** Все коммиты — только в рабочую ветку.
