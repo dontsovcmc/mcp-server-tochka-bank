@@ -350,27 +350,28 @@ def tochka_search(query: str, days: int = 90) -> str:
 
 
 @mcp.tool()
-def tochka_track_invoice(buyer_inn: str, buyer_name: str, amount: str, description: str) -> str:
+def tochka_track_invoice(number: str, buyer_inn: str, buyer_name: str, amount: str, description: str) -> str:
     """Start tracking an invoice for payment. Persists across sessions.
 
     Args:
+        number: Invoice number (e.g. "140")
         buyer_inn: Buyer INN (who should pay)
         buyer_name: Buyer company name
         amount: Expected payment amount (e.g. "5290.00")
         description: Invoice description (e.g. "Счёт №140 от 2026-04-10")
     """
-    item = add_invoice(buyer_inn, buyer_name, amount, description)
+    item = add_invoice(number, buyer_inn, buyer_name, amount, description)
     return json.dumps(item, ensure_ascii=False)
 
 
 @mcp.tool()
-def tochka_untrack_invoice(invoice_id: str) -> str:
-    """Stop tracking an invoice by its id.
+def tochka_untrack_invoice(number: str) -> str:
+    """Stop tracking an invoice by its number.
 
     Args:
-        invoice_id: Invoice tracker id (from tochka_track_invoice or tochka_pending_invoices)
+        number: Invoice number (from tochka_track_invoice or tochka_pending_invoices)
     """
-    item = remove_invoice(invoice_id)
+    item = remove_invoice(number)
     return json.dumps({"removed": item}, ensure_ascii=False)
 
 
@@ -378,7 +379,7 @@ def tochka_untrack_invoice(invoice_id: str) -> str:
 def tochka_pending_invoices() -> str:
     """List all invoices being tracked for payment.
 
-    Returns JSON array of pending invoices with id, buyer_inn, buyer_name, amount, description, created_at.
+    Returns JSON array of pending invoices with number, buyer_inn, buyer_name, amount, description, created_at.
     """
     return json.dumps(list_invoices(), ensure_ascii=False)
 
@@ -435,6 +436,6 @@ def tochka_check_invoices(days: int = 30) -> str:
             still_pending.append(inv)
 
     for inv in paid:
-        remove_invoice(inv["id"])
+        remove_invoice(inv["number"])
 
     return json.dumps({"paid": paid, "pending": still_pending}, ensure_ascii=False)
