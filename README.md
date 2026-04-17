@@ -42,14 +42,63 @@ MCP-сервер для работы с [API банка Точка](https://deve
 
 ### Шаг 2. Подключить MCP-сервер
 
-**Claude Code:**
+#### Claude Code (CLI в терминале)
+
+**Способ 1: через uvx** (не требует установки пакета)
+
+> Требуется [uv](https://docs.astral.sh/uv/) — если не установлен:
+> ```bash
+> curl -LsSf https://astral.sh/uv/install.sh | sh
+> ```
+
 ```bash
+claude mcp add tochka-bank \
+  -e TOCHKA_TOKEN=ваш_токен \
+  -- uvx mcp-server-tochka-bank
+```
+
+**Способ 2: через pip**
+
+```bash
+pip install mcp-server-tochka-bank
+
 claude mcp add tochka-bank \
   -e TOCHKA_TOKEN=ваш_токен \
   -- python -m mcp_server_tochka_bank
 ```
 
-**Claude Desktop** — добавьте в `claude_desktop_config.json`:
+Для удаления:
+```bash
+claude mcp remove tochka-bank
+```
+
+#### Claude Desktop (десктопное приложение)
+
+Добавьте в конфигурационный файл:
+
+| Клиент | ОС | Путь к файлу |
+|--------|----|-------------|
+| Claude Code | все | `~/.claude/settings.json` (секция `mcpServers`) |
+| Claude Desktop | macOS | `~/Library/Application Support/Claude/claude_desktop_config.json` |
+| Claude Desktop | Windows | `%APPDATA%\Claude\claude_desktop_config.json` |
+| Claude Desktop | Linux | `~/.config/Claude/claude_desktop_config.json` |
+
+**Через uvx:**
+```json
+{
+  "mcpServers": {
+    "tochka-bank": {
+      "command": "uvx",
+      "args": ["mcp-server-tochka-bank"],
+      "env": {
+        "TOCHKA_TOKEN": "ваш_токен"
+      }
+    }
+  }
+}
+```
+
+**Через pip** (после `pip install mcp-server-tochka-bank`):
 ```json
 {
   "mcpServers": {
@@ -63,6 +112,8 @@ claude mcp add tochka-bank \
   }
 }
 ```
+
+Для удаления — удалите блок `"tochka-bank"` из файла.
 
 Токен хранится только на вашем компьютере и передаётся серверу через переменную окружения.
 
