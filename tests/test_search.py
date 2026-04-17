@@ -19,8 +19,12 @@ MOCK_STATEMENT = {
             "Amount": {"amount": 5290.0, "currency": "RUB"},
             "description": "Оплата по счёту №140",
             "documentNumber": "123",
-            "DebtorParty": {"inn": "770000000002", "name": "ООО Рога и Копыта"},
+            "DebtorParty": {"inn": "770000000002", "name": "ООО Рога и Копыта", "kpp": "770000001"},
+            "DebtorAccount": {"identification": "40702810200000000002"},
+            "DebtorAgent": {"identification": "044525001", "accountIdentification": "30101810400000000001"},
             "CreditorParty": {"inn": "770000000001", "name": "ИП Иванов"},
+            "CreditorAccount": {"identification": "40802810100000000001"},
+            "CreditorAgent": {"identification": "044525000", "accountIdentification": "30101810400000000000"},
         },
         {
             "documentProcessDate": "2026-04-11",
@@ -29,7 +33,11 @@ MOCK_STATEMENT = {
             "description": "Оплата СДЭК",
             "documentNumber": "456",
             "DebtorParty": {"inn": "770000000001", "name": "ИП Иванов"},
+            "DebtorAccount": {"identification": "40802810100000000001"},
+            "DebtorAgent": {"identification": "044525000", "accountIdentification": "30101810400000000000"},
             "CreditorParty": {"inn": "7700000001", "name": "ООО СДЭК"},
+            "CreditorAccount": {"identification": "40702810300000000003"},
+            "CreditorAgent": {"identification": "044525002", "accountIdentification": "30101810400000000002"},
         },
     ],
 }
@@ -51,7 +59,14 @@ async def test_tochka_search_by_inn():
             assert not result.isError
             data = json.loads(result.content[0].text)
             assert data["total"] == 1
-            assert data["transactions"][0]["debtor"]["inn"] == "770000000002"
+            tx = data["transactions"][0]
+            assert tx["debtor"]["inn"] == "770000000002"
+            assert tx["debtor"]["kpp"] == "770000001"
+            assert tx["debtorBic"] == "044525001"
+            assert tx["debtorAccount"] == "40702810200000000002"
+            assert tx["debtorCorrAccount"] == "30101810400000000001"
+            assert tx["creditorBic"] == "044525000"
+            assert tx["creditorAccount"] == "40802810100000000001"
 
 
 @pytest.mark.anyio
@@ -69,7 +84,11 @@ async def test_tochka_search_by_name():
             assert not result.isError
             data = json.loads(result.content[0].text)
             assert data["total"] == 1
-            assert data["transactions"][0]["creditor"]["name"] == "ООО СДЭК"
+            tx = data["transactions"][0]
+            assert tx["creditor"]["name"] == "ООО СДЭК"
+            assert tx["creditorBic"] == "044525002"
+            assert tx["creditorAccount"] == "40702810300000000003"
+            assert tx["creditorCorrAccount"] == "30101810400000000002"
 
 
 @pytest.mark.anyio

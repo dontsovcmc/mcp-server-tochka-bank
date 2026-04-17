@@ -298,6 +298,9 @@ def tochka_upd(
 def tochka_search(query: str, days: int = 90) -> str:
     """Search bank transactions by counterparty INN or name via statements.
 
+    Returns full counterparty details including bank BIC, account and correspondent account —
+    enough to create a payment via tochka_payment without asking the user for details.
+
     Args:
         query: INN or part of counterparty name
         days: Search depth in days (default 90)
@@ -333,8 +336,22 @@ def tochka_search(query: str, days: int = 90) -> str:
                 "currency": tx.get("Amount", {}).get("currency"),
                 "description": tx.get("description"),
                 "documentNumber": tx.get("documentNumber"),
-                "debtor": {"name": debtor.get("name"), "inn": debtor.get("inn")},
-                "creditor": {"name": creditor.get("name"), "inn": creditor.get("inn")},
+                "debtor": {
+                    "name": debtor.get("name"),
+                    "inn": debtor.get("inn"),
+                    "kpp": debtor.get("kpp", ""),
+                },
+                "debtorAccount": tx.get("DebtorAccount", {}).get("identification", ""),
+                "debtorBic": tx.get("DebtorAgent", {}).get("identification", ""),
+                "debtorCorrAccount": tx.get("DebtorAgent", {}).get("accountIdentification", ""),
+                "creditor": {
+                    "name": creditor.get("name"),
+                    "inn": creditor.get("inn"),
+                    "kpp": creditor.get("kpp", ""),
+                },
+                "creditorAccount": tx.get("CreditorAccount", {}).get("identification", ""),
+                "creditorBic": tx.get("CreditorAgent", {}).get("identification", ""),
+                "creditorCorrAccount": tx.get("CreditorAgent", {}).get("accountIdentification", ""),
             })
 
     result = {
