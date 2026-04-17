@@ -1,0 +1,16 @@
+{
+  "name": "io.github.dontsovcmc/tochka-bank",
+  "description": "MCP server for Tochka Bank API — balance, payments, invoices, UPD, payment tracking",
+  "repository": {
+    "url": "https://github.com/dontsovcmc/mcp-server-tochka-bank",
+    "source": "github"
+  },
+  "version": "0.3.0",
+  "packages": [
+    {
+      "registry_type": "pypi",
+      "identifier": "mcp-server-tochka-bank",
+      "version": "0.3.0"
+    }
+  ]
+}

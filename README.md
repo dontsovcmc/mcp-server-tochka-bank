@@ -1,3 +1,5 @@
+<!-- mcp-name: io.github.dontsovcmc/tochka-bank -->
+
 # mcp-server-tochka-bank
 
 MCP-сервер для работы с [API банка Точка](https://developers.tochka.com/docs/tochka-api/) через Claude Code, Claude Desktop и другие MCP-совместимые клиенты.
