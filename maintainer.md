@@ -39,11 +39,25 @@ pip install mcp-server-tochka-bank==X.Y.Z
 
 ## MCP-реестр
 
-### Установка
+### Установка mcp-publisher
 
+**macOS (Homebrew):**
 ```bash
 brew install mcp-publisher
 ```
+
+**macOS/Linux (бинарник):**
+```bash
+curl -L "https://github.com/modelcontextprotocol/registry/releases/latest/download/mcp-publisher_$(uname -s | tr '[:upper:]' '[:lower:]')_$(uname -m | sed 's/x86_64/amd64/;s/aarch64/arm64/').tar.gz" | tar xz mcp-publisher
+sudo mv mcp-publisher /usr/local/bin/
+```
+
+**Linux (Snap):**
+```bash
+snap install mcp-publisher
+```
+
+Проверка: `mcp-publisher --help`
 
 ### Авторизация
 
