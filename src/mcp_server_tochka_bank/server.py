@@ -1,5 +1,6 @@
 """MCP server for Tochka Bank API."""
 
+import calendar
 import json
 import logging
 import os
@@ -362,6 +363,69 @@ def tochka_search(query: str, days: int = 90) -> str:
         "period": {"from": start.isoformat(), "to": end.isoformat()},
         "total": len(matches),
         "transactions": matches,
+    }
+    return json.dumps(result, ensure_ascii=False)
+
+
+# ── Incoming ────────────────────────────────────────────────────────
+
+
+@mcp.tool()
+def tochka_incoming(month: int, year: int, inn: str = "") -> str:
+    """Get incoming (Credit) bank transactions for a month, grouped by debtor INN.
+
+    Useful for tax reports (AUSN vzaimozachet) — shows how much was received
+    from each counterparty in a given month.
+
+    Args:
+        month: Month number (1-12)
+        year: Year (e.g. 2026)
+        inn: Optional debtor INN filter (e.g. "3532015985")
+    """
+    api = _get_api()
+    acc = _get_account(api)
+    account_id = acc["accountId"]
+
+    last_day = calendar.monthrange(year, month)[1]
+    start_date = f"{year}-{month:02d}-01"
+    end_date = f"{year}-{month:02d}-{last_day}"
+
+    statement_id = api.init_statement(account_id, start_date, end_date)
+    statement = api.get_statement_ready(account_id, statement_id)
+
+    filter_inn = inn.strip() if inn else ""
+
+    by_inn: dict[str, dict] = {}
+    for tx in statement.get("Transaction", []):
+        if tx.get("creditDebitIndicator") != "Credit":
+            continue
+        debtor_inn = tx.get("DebtorParty", {}).get("inn", "")
+        if filter_inn and debtor_inn != filter_inn:
+            continue
+        amount = float(tx.get("Amount", {}).get("amount", 0))
+        if debtor_inn in by_inn:
+            by_inn[debtor_inn]["amount"] += amount
+            by_inn[debtor_inn]["count"] += 1
+        else:
+            by_inn[debtor_inn] = {
+                "name": tx.get("DebtorParty", {}).get("name", ""),
+                "amount": amount,
+                "count": 1,
+            }
+
+    # Round amounts to 2 decimal places
+    for entry in by_inn.values():
+        entry["amount"] = round(entry["amount"], 2)
+
+    total_amount = round(sum(e["amount"] for e in by_inn.values()), 2)
+    total_count = sum(e["count"] for e in by_inn.values())
+
+    result = {
+        "period": {"month": month, "year": year},
+        "filter_inn": inn,
+        "by_inn": by_inn,
+        "total_amount": total_amount,
+        "total_count": total_count,
     }
     return json.dumps(result, ensure_ascii=False)
 
