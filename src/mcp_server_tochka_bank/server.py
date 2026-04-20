@@ -371,7 +371,7 @@ def tochka_search(query: str, days: int = 90) -> str:
 
 
 @mcp.tool()
-def tochka_incoming(month: int, year: int, inn: str = "") -> str:
+def tochka_incoming(month: int, year: int, inn: str = "", description: str = "") -> str:
     """Get incoming (Credit) bank transactions for a month, grouped by debtor INN.
 
     Useful for tax reports (AUSN vzaimozachet) — shows how much was received
@@ -380,7 +380,8 @@ def tochka_incoming(month: int, year: int, inn: str = "") -> str:
     Args:
         month: Month number (1-12)
         year: Year (e.g. 2026)
-        inn: Optional debtor INN filter (e.g. "3532015985")
+        inn: Optional debtor INN filter (e.g. "6316049606")
+        description: Optional substring filter for payment description (case-insensitive, e.g. "РОБОКАССА")
     """
     api = _get_api()
     acc = _get_account(api)
@@ -394,6 +395,7 @@ def tochka_incoming(month: int, year: int, inn: str = "") -> str:
     statement = api.get_statement_ready(account_id, statement_id)
 
     filter_inn = inn.strip() if inn else ""
+    filter_desc = description.strip().lower() if description else ""
 
     by_inn: dict[str, dict] = {}
     for tx in statement.get("Transaction", []):
@@ -401,6 +403,8 @@ def tochka_incoming(month: int, year: int, inn: str = "") -> str:
             continue
         debtor_inn = tx.get("DebtorParty", {}).get("inn", "")
         if filter_inn and debtor_inn != filter_inn:
+            continue
+        if filter_desc and filter_desc not in tx.get("description", "").lower():
             continue
         amount = float(tx.get("Amount", {}).get("amount", 0))
         if debtor_inn in by_inn:

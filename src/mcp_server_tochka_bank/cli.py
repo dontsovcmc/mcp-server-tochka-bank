@@ -33,6 +33,7 @@ def main(argv: list[str] | None = None):
     p_inc.add_argument("--month", type=int, required=True, help="Месяц (1-12)")
     p_inc.add_argument("--year", type=int, required=True, help="Год (YYYY)")
     p_inc.add_argument("--inn", default="", help="ИНН отправителя для фильтрации")
+    p_inc.add_argument("--description", default="", help="Подстрока в назначении платежа (например, РОБОКАССА)")
 
     # goods
     p_goods = sub.add_parser("goods", help="Справочник товаров")
@@ -61,7 +62,7 @@ def main(argv: list[str] | None = None):
     handlers = {
         "balance": lambda: server.tochka_balance(),
         "search": lambda: server.tochka_search(args.query, args.days),
-        "incoming": lambda: server.tochka_incoming(args.month, args.year, args.inn),
+        "incoming": lambda: server.tochka_incoming(args.month, args.year, args.inn, args.description),
         "pending-invoices": lambda: server.tochka_pending_invoices(),
         "check-invoices": lambda: server.tochka_check_invoices(args.days),
     }
