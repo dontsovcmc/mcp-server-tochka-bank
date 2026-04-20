@@ -17,6 +17,7 @@ MCP-сервер для работы с [API банка Точка](https://deve
 | `tochka_download_invoice` | Скачать PDF счёта |
 | `tochka_upd` | Создать УПД (универсальный передаточный документ), получить ссылку на подпись |
 | `tochka_search` | Поиск операций по ИНН или названию контрагента (возвращает полные реквизиты: БИК, счёт, корр.счёт) |
+| `tochka_incoming` | Входящие поступления за месяц, сгруппированные по ИНН отправителя (для налоговых отчётов АУСН) |
 
 ### Отслеживание оплаты счетов
 
@@ -146,7 +147,7 @@ claude mcp remove tochka-bank
 
 Попросите Claude: *«покажи баланс в банке Точка»* — он вызовет `tochka_balance`.
 
-## Примеры
+## Примеры (MCP)
 
 - «покажи баланс» → `tochka_balance`
 - «выстави счёт ООО Рога и Копыта на 15 000 ₽» → `tochka_invoice`
@@ -158,6 +159,44 @@ claude mcp remove tochka-bank
 - «отслеживай оплату счёта №140» → `tochka_track_invoice`
 - «какие счета не оплачены?» → `tochka_pending_invoices`
 - «проверь оплату» → `tochka_check_invoices`
+
+## CLI-режим
+
+Пакет можно использовать как CLI-инструмент в терминале. Без аргументов запускается MCP-сервер, с командой — CLI.
+
+### Требования
+
+Переменная окружения `TOCHKA_TOKEN` должна быть установлена:
+
+```bash
+export TOCHKA_TOKEN=ваш_токен
+```
+
+### Команды
+
+```bash
+# Баланс
+mcp-server-tochka-bank balance
+
+# Поиск операций по ИНН или названию
+mcp-server-tochka-bank search 7700000000
+mcp-server-tochka-bank search робокасса --days 60
+
+# Входящие поступления за месяц (для налоговых отчётов)
+mcp-server-tochka-bank incoming --month 3 --year 2026
+mcp-server-tochka-bank incoming --month 3 --year 2026 --inn 3532015985
+
+# Справочник товаров
+mcp-server-tochka-bank goods list
+mcp-server-tochka-bank goods add --name "Виджет" --unit "шт." --price "500.00"
+mcp-server-tochka-bank goods remove --name "Виджет"
+
+# Отслеживание оплаты
+mcp-server-tochka-bank pending-invoices
+mcp-server-tochka-bank check-invoices --days 30
+```
+
+Все команды выводят результат в JSON.
 
 ## Лицензия
 

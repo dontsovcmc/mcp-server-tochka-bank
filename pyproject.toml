@@ -1,6 +1,6 @@
 [project]
 name = "mcp-server-tochka-bank"
-version = "0.3.2"
+version = "0.4.0"
 description = "MCP server for Tochka Bank API — balance, payments, invoices, UPD"
 readme = "README.md"
 license = {text = "MIT"}
