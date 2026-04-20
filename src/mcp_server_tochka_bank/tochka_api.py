@@ -1,4 +1,8 @@
-"""Клиент для API банка Точка (https://developers.tochka.com/docs/tochka-api/)."""
+"""Клиент для API банка Точка.
+
+Docs: https://developers.tochka.com/docs/tochka-api/
+Swagger: https://enter.tochka.com/doc/openapi/swagger.json
+"""
 
 import time
 from datetime import date
@@ -197,6 +201,8 @@ class TochkaAPI:
         statements = data.get("Data", {}).get("Statement", [])
         if not statements:
             raise RuntimeError(f"Пустой ответ при создании выписки: {data}")
+        if isinstance(statements, dict):
+            return statements["statementId"]
         return statements[0]["statementId"]
 
     def get_statement(self, account_id: str, statement_id: str) -> dict:
@@ -209,6 +215,8 @@ class TochkaAPI:
         for _ in range(max_wait // 2):
             data = self.get_statement(account_id, statement_id)
             statements = data.get("Data", {}).get("Statement", [])
+            if isinstance(statements, dict):
+                statements = [statements]
             if statements and statements[0].get("status") == "Ready":
                 return statements[0]
             if statements and statements[0].get("status") == "Error":
