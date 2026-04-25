@@ -6,6 +6,7 @@ from unittest.mock import patch
 import pytest
 from mcp.shared.memory import create_connected_server_and_client_session
 
+from mcp_server_tochka_bank.models import PaymentForSignResponse
 from mcp_server_tochka_bank.server import mcp
 
 MOCK_ACCOUNT = {"accountId": "40702810100000000001/044525000", "customerCode": "100000001", "status": "Enabled"}
@@ -40,3 +41,4 @@ async def test_tochka_payment():
             assert "requestId" in data
             assert "redirectURL" in data
             assert "i.tochka.com" in data["redirectURL"]
+            PaymentForSignResponse.model_validate(data)

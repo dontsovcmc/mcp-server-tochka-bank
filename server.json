@@ -1,17 +1,17 @@
 {
   "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
   "name": "io.github.dontsovcmc/tochka-bank",
-  "description": "MCP server for Tochka Bank API — balance, payments, invoices, UPD, payment tracking",
+  "description": "MCP server for Tochka Bank API — balance, payments, invoices, UPD, acquiring, subscriptions, consents, payment tracking",
   "repository": {
     "url": "https://github.com/dontsovcmc/mcp-server-tochka-bank",
     "source": "github"
   },
-  "version": "0.3.2",
+  "version": "0.5.0",
   "packages": [
     {
       "registryType": "pypi",
       "identifier": "mcp-server-tochka-bank",
-      "version": "0.3.2",
+      "version": "0.5.0",
       "transport": {
         "type": "stdio"
       },

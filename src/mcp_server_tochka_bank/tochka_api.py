@@ -35,6 +35,18 @@ class TochkaAPI:
             raise RuntimeError(f"POST {path} -> {resp.status_code}: {resp.text}")
         return resp.json()
 
+    def _delete(self, path: str, **kwargs) -> dict:
+        resp = self.session.delete(f"{BASE_URL}{path}", timeout=30, **kwargs)
+        if not resp.ok:
+            raise RuntimeError(f"DELETE {path} -> {resp.status_code}: {resp.text}")
+        return resp.json()
+
+    def _get_bytes(self, path: str, **kwargs) -> bytes:
+        resp = self.session.get(f"{BASE_URL}{path}", timeout=30, **kwargs)
+        if not resp.ok:
+            raise RuntimeError(f"GET {path} -> {resp.status_code}: {resp.text}")
+        return resp.content
+
     # --- Счета ---
 
     def get_accounts(self) -> list:
@@ -223,3 +235,176 @@ class TochkaAPI:
                 raise RuntimeError(f"Ошибка формирования выписки: {statements[0]}")
             time.sleep(2)
         raise RuntimeError(f"Выписка не готова за {max_wait} секунд")
+
+    # --- Счёт (детали) ---
+
+    def get_account(self, account_id: str) -> dict:
+        """GET /open-banking/v1.0/accounts/{accountId}"""
+        data = self._get(f"/open-banking/v1.0/accounts/{account_id}")
+        return data.get("Data", {}).get("Account", data.get("Data", {}))
+
+    # --- Баланс (все счета) ---
+
+    def get_all_balances(self) -> list:
+        """GET /open-banking/v1.0/balances"""
+        data = self._get("/open-banking/v1.0/balances")
+        return data.get("Data", {}).get("Balance", [])
+
+    # --- Выписки (список) ---
+
+    def get_statements_list(self, limit: int = 5) -> list:
+        """GET /open-banking/v1.0/statements"""
+        data = self._get("/open-banking/v1.0/statements", params={"limit": limit})
+        return data.get("Data", {}).get("Statement", [])
+
+    # --- Карточные транзакции ---
+
+    def get_card_transactions(self, account_id: str) -> list:
+        """GET /open-banking/v1.0/accounts/{accountId}/authorized-card-transactions"""
+        data = self._get(f"/open-banking/v1.0/accounts/{account_id}/authorized-card-transactions")
+        return data.get("Data", {}).get("Transaction", [])
+
+    # --- Клиенты ---
+
+    def get_customers(self) -> list:
+        """GET /open-banking/v1.0/customers"""
+        data = self._get("/open-banking/v1.0/customers")
+        return data.get("Data", {}).get("Customer", [])
+
+    def get_customer(self, customer_code: str) -> dict:
+        """GET /open-banking/v1.0/customers/{customerCode}"""
+        data = self._get(f"/open-banking/v1.0/customers/{customer_code}")
+        return data.get("Data", {}).get("Customer", data.get("Data", {}))
+
+    # --- Счета на оплату (дополнительно) ---
+
+    def delete_invoice(self, customer_code: str, document_id: str) -> dict:
+        """DELETE /invoice/v1.0/bills/{customerCode}/{documentId}"""
+        return self._delete(f"/invoice/v1.0/bills/{customer_code}/{document_id}")
+
+    def send_invoice_email(self, customer_code: str, document_id: str, email: str) -> dict:
+        """POST /invoice/v1.0/bills/{customerCode}/{documentId}/email"""
+        payload = {"Data": {"email": email}}
+        return self._post(f"/invoice/v1.0/bills/{customer_code}/{document_id}/email", payload)
+
+    # --- Закрывающие документы (дополнительно) ---
+
+    def delete_closing_document(self, customer_code: str, document_id: str) -> dict:
+        """DELETE /invoice/v1.0/closing-documents/{customerCode}/{documentId}"""
+        return self._delete(f"/invoice/v1.0/closing-documents/{customer_code}/{document_id}")
+
+    def send_closing_document_email(self, customer_code: str, document_id: str, email: str) -> dict:
+        """POST /invoice/v1.0/closing-documents/{customerCode}/{documentId}/email"""
+        payload = {"Data": {"email": email}}
+        return self._post(f"/invoice/v1.0/closing-documents/{customer_code}/{document_id}/email", payload)
+
+    def download_closing_document(self, customer_code: str, document_id: str) -> bytes:
+        """GET /invoice/v1.0/closing-documents/{customerCode}/{documentId}/file"""
+        return self._get_bytes(f"/invoice/v1.0/closing-documents/{customer_code}/{document_id}/file")
+
+    # --- Платежи (список) ---
+
+    def get_payments_for_sign(self, customer_code: str) -> dict:
+        """GET /payment/v1.0/for-sign"""
+        return self._get("/payment/v1.0/for-sign", params={"customerCode": customer_code})
+
+    # --- Эквайринг ---
+
+    def get_acquiring_payments(self, customer_code: str, from_date: str = "",
+                               to_date: str = "", page: int = 1,
+                               per_page: int = 1000, status: str = "") -> dict:
+        """GET /acquiring/v1.0/payments"""
+        params = {"customerCode": customer_code, "page": page, "perPage": per_page}
+        if from_date:
+            params["fromDate"] = from_date
+        if to_date:
+            params["toDate"] = to_date
+        if status:
+            params["status"] = status
+        return self._get("/acquiring/v1.0/payments", params=params)
+
+    def create_acquiring_payment(self, payload: dict) -> dict:
+        """POST /acquiring/v1.0/payments"""
+        return self._post("/acquiring/v1.0/payments", payload)
+
+    def get_acquiring_payment(self, operation_id: str) -> dict:
+        """GET /acquiring/v1.0/payments/{operationId}"""
+        return self._get(f"/acquiring/v1.0/payments/{operation_id}")
+
+    def capture_acquiring_payment(self, operation_id: str, payload: dict) -> dict:
+        """POST /acquiring/v1.0/payments/{operationId}/capture"""
+        return self._post(f"/acquiring/v1.0/payments/{operation_id}/capture", payload)
+
+    def refund_acquiring_payment(self, operation_id: str, payload: dict) -> dict:
+        """POST /acquiring/v1.0/payments/{operationId}/refund"""
+        return self._post(f"/acquiring/v1.0/payments/{operation_id}/refund", payload)
+
+    def create_acquiring_payment_with_receipt(self, payload: dict) -> dict:
+        """POST /acquiring/v1.0/payments_with_receipt"""
+        return self._post("/acquiring/v1.0/payments_with_receipt", payload)
+
+    def get_acquiring_registry(self, customer_code: str, merchant_id: str,
+                               registry_date: str, payment_id: str = "") -> dict:
+        """GET /acquiring/v1.0/registry"""
+        params = {"customerCode": customer_code, "merchantId": merchant_id, "date": registry_date}
+        if payment_id:
+            params["paymentId"] = payment_id
+        return self._get("/acquiring/v1.0/registry", params=params)
+
+    def get_acquiring_retailers(self, customer_code: str) -> dict:
+        """GET /acquiring/v1.0/retailers"""
+        return self._get("/acquiring/v1.0/retailers", params={"customerCode": customer_code})
+
+    # --- Подписки ---
+
+    def create_subscription(self, payload: dict) -> dict:
+        """POST /acquiring/v1.0/subscriptions"""
+        return self._post("/acquiring/v1.0/subscriptions", payload)
+
+    def get_subscriptions(self, customer_code: str, page: int = 1,
+                          per_page: int = 1000, recurring: str = "") -> dict:
+        """GET /acquiring/v1.0/subscriptions"""
+        params = {"customerCode": customer_code, "page": page, "perPage": per_page}
+        if recurring:
+            params["recurring"] = recurring
+        return self._get("/acquiring/v1.0/subscriptions", params=params)
+
+    def charge_subscription(self, operation_id: str, payload: dict) -> dict:
+        """POST /acquiring/v1.0/subscriptions/{operationId}/charge"""
+        return self._post(f"/acquiring/v1.0/subscriptions/{operation_id}/charge", payload)
+
+    def get_subscription_status(self, operation_id: str) -> dict:
+        """GET /acquiring/v1.0/subscriptions/{operationId}/status"""
+        return self._get(f"/acquiring/v1.0/subscriptions/{operation_id}/status")
+
+    def set_subscription_status(self, operation_id: str, payload: dict) -> dict:
+        """POST /acquiring/v1.0/subscriptions/{operationId}/status"""
+        return self._post(f"/acquiring/v1.0/subscriptions/{operation_id}/status", payload)
+
+    def create_subscription_with_receipt(self, payload: dict) -> dict:
+        """POST /acquiring/v1.0/subscriptions_with_receipt"""
+        return self._post("/acquiring/v1.0/subscriptions_with_receipt", payload)
+
+    # --- Разрешения (Consents) ---
+
+    def get_consents(self, customer_code: str = "") -> dict:
+        """GET /consent/v1.0/consents"""
+        headers = {}
+        if customer_code:
+            headers["customer-code"] = customer_code
+        return self._get("/consent/v1.0/consents", headers=headers)
+
+    def create_consent(self, payload: dict) -> dict:
+        """POST /consent/v1.0/consents"""
+        return self._post("/consent/v1.0/consents", payload)
+
+    def get_consent(self, consent_id: str, customer_code: str = "") -> dict:
+        """GET /consent/v1.0/consents/{consentId}"""
+        headers = {}
+        if customer_code:
+            headers["customer-code"] = customer_code
+        return self._get(f"/consent/v1.0/consents/{consent_id}", headers=headers)
+
+    def get_consent_children(self, consent_id: str) -> dict:
+        """GET /consent/v1.0/consents/{consentId}/child"""
+        return self._get(f"/consent/v1.0/consents/{consent_id}/child")

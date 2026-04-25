@@ -19,6 +19,52 @@ MCP-сервер для работы с [API банка Точка](https://deve
 | `tochka_search` | Поиск операций по ИНН или названию контрагента (возвращает полные реквизиты: БИК, счёт, корр.счёт) |
 | `tochka_incoming` | Входящие поступления за месяц, сгруппированные по ИНН отправителя (для налоговых отчётов АУСН) |
 
+### Счета и документы (дополнительно)
+| Инструмент | Описание |
+|------------|----------|
+| `tochka_account_detail` | Детали банковского счёта |
+| `tochka_all_balances` | Балансы всех счетов |
+| `tochka_statements_list` | Список последних выписок |
+| `tochka_card_transactions` | Авторизованные карточные транзакции |
+| `tochka_customers` | Список клиентов (организаций) |
+| `tochka_customer` | Детали клиента |
+| `tochka_delete_invoice` | Удалить счёт |
+| `tochka_send_invoice_email` | Отправить счёт на email |
+| `tochka_delete_closing_document` | Удалить закрывающий документ |
+| `tochka_send_closing_document_email` | Отправить закрывающий документ на email |
+| `tochka_download_closing_document` | Скачать PDF закрывающего документа |
+| `tochka_payments_for_sign` | Список платежей на подпись |
+
+### Эквайринг (платёжные ссылки)
+| Инструмент | Описание |
+|------------|----------|
+| `tochka_acquiring_payments` | Список операций эквайринга |
+| `tochka_acquiring_payment_create` | Создать платёжную ссылку |
+| `tochka_acquiring_payment` | Детали операции эквайринга |
+| `tochka_acquiring_payment_capture` | Списать средства (двухстадийный платёж) |
+| `tochka_acquiring_payment_refund` | Возврат платежа |
+| `tochka_acquiring_payment_with_receipt` | Создать платёж с фискальным чеком |
+| `tochka_acquiring_registry` | Реестр платежей эквайринга |
+| `tochka_acquiring_retailers` | Список торговых точек |
+
+### П��дписки (рекуррентные платежи)
+| Инструмент | Описание |
+|------------|----------|
+| `tochka_subscription_create` | Создать подписку |
+| `tochka_subscriptions` | Список подписок |
+| `tochka_subscription_charge` | Списание по подписке |
+| `tochka_subscription_status` | Статус подписки |
+| `tochka_subscription_status_set` | Установить статус подписки |
+| `tochka_subscription_with_receipt` | Создать подписку с фискальным чеком |
+
+### Разрешения API (Consents)
+| Инструмент | Описание |
+|------------|----------|
+| `tochka_consents` | Список разрешений |
+| `tochka_consent_create` | Создать разрешение |
+| `tochka_consent` | Детали разрешения |
+| `tochka_consent_children` | Дочерние разрешения |
+
 ### Отслеживание оплаты счетов
 
 | Инструмент | Описание |
@@ -59,11 +105,13 @@ MCP-сервер для работы с [API банка Точка](https://deve
 2. Перейдите в **Настройки** → **Интеграции и API**
 3. Нажмите **«Создать токен»** (JWT)
 4. Выберите разрешения:
-   - `ReadAccountsBasic` — информация о счетах
+   - `ReadAccountsBasic`, `ReadAccountsDetail` — информация о счетах
    - `ReadBalances` — баланс
    - `ReadStatements` — выписки
-   - `CreatePaymentForSign` — создание платежей
+   - `ReadCustomerData` — данные клиентов
+   - `CreatePaymentForSign`, `ReadPaymentData` — платежи
    - `ManageInvoiceData` — счета и закрывающие документы
+   - `ReadAcquiringData`, `MakeAcquiringOperation` — эквайринг и подписки
 5. Скопируйте сгенерированный токен
 
 ### Шаг 2. Подключить MCP-сервер
@@ -177,6 +225,8 @@ export TOCHKA_TOKEN=ваш_токен
 ```bash
 # Баланс
 mcp-server-tochka-bank balance
+mcp-server-tochka-bank all-balances
+mcp-server-tochka-bank account-detail --account-id 40702810100000000001/044525000
 
 # Поиск операций по ИНН или названию
 mcp-server-tochka-bank search 7700000000
@@ -185,6 +235,33 @@ mcp-server-tochka-bank search робокасса --days 60
 # Входящие поступления за месяц (для налоговых отчётов)
 mcp-server-tochka-bank incoming --month 3 --year 2026
 mcp-server-tochka-bank incoming --month 3 --year 2026 --inn 3532015985
+
+# Выписки и транзакции
+mcp-server-tochka-bank statements-list --limit 10
+mcp-server-tochka-bank card-transactions
+
+# Клиенты
+mcp-server-tochka-bank customers
+mcp-server-tochka-bank customer 100000001
+
+# Счета и документы
+mcp-server-tochka-bank delete-invoice <document_id>
+mcp-server-tochka-bank send-invoice-email <document_id> buyer@example.com
+mcp-server-tochka-bank download-closing-document <document_id> /tmp/upd.pdf
+mcp-server-tochka-bank payments-for-sign
+
+# Эквайринг
+mcp-server-tochka-bank acquiring-payments --page 1
+mcp-server-tochka-bank acquiring-payment <operation_id>
+mcp-server-tochka-bank acquiring-retailers
+
+# Подписки
+mcp-server-tochka-bank subscriptions
+mcp-server-tochka-bank subscription-status <operation_id>
+
+# Разрешения
+mcp-server-tochka-bank consents
+mcp-server-tochka-bank consent <consent_id>
 
 # Справочник товаров
 mcp-server-tochka-bank goods list

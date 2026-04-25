@@ -7,6 +7,7 @@ import pytest
 from mcp.shared.memory import create_connected_server_and_client_session
 from mcp.types import TextContent
 
+from mcp_server_tochka_bank.models import Account, Balance, BalanceToolResult
 from mcp_server_tochka_bank.server import mcp
 
 MOCK_ACCOUNTS = [{"accountId": "40702810100000000001/044525000", "customerCode": "100000001", "status": "Enabled", "currency": "RUB"}]
@@ -19,6 +20,10 @@ MOCK_BALANCES = [
 
 @pytest.mark.anyio
 async def test_tochka_balance():
+    Account.model_validate(MOCK_ACCOUNTS[0])
+    for b in MOCK_BALANCES:
+        Balance.model_validate(b)
+
     with patch("mcp_server_tochka_bank.server.TochkaAPI") as MockAPI:
         instance = MockAPI.return_value
         instance.get_first_account.return_value = MOCK_ACCOUNTS[0]
@@ -31,3 +36,4 @@ async def test_tochka_balance():
             assert data["accountId"] == "40702810100000000001/044525000"
             assert len(data["balances"]) == 2
             assert data["balances"][0]["amount"] == 50000.00
+            BalanceToolResult.model_validate(data)
