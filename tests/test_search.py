@@ -6,6 +6,7 @@ from unittest.mock import patch
 import pytest
 from mcp.shared.memory import create_connected_server_and_client_session
 
+from mcp_server_tochka_bank.models import SearchResult
 from mcp_server_tochka_bank.server import mcp
 
 MOCK_ACCOUNT = {"accountId": "40702810100000000001/044525000", "customerCode": "100000001", "status": "Enabled"}
@@ -104,3 +105,4 @@ async def test_tochka_search_no_results():
             assert not result.isError
             data = json.loads(result.content[0].text)
             assert data["total"] == 0
+            SearchResult.model_validate(data)

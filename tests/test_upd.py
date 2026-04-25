@@ -6,6 +6,7 @@ from unittest.mock import patch
 import pytest
 from mcp.shared.memory import create_connected_server_and_client_session
 
+from mcp_server_tochka_bank.models import ClosingDocumentResponse
 from mcp_server_tochka_bank.server import mcp
 
 MOCK_ACCOUNT = {"accountId": "40702810100000000001/044525000", "customerCode": "100000001", "status": "Enabled"}
@@ -42,3 +43,4 @@ async def test_tochka_upd():
             assert data["documentId"] == "caf8d50a-a23d-4460-af30-51bb75cbfb84"
             assert "signURL" in data
             assert "caf8d50a-a23d-4460-af30-51bb75cbfb84" in data["signURL"]
+            ClosingDocumentResponse.model_validate(data)

@@ -28,8 +28,10 @@ GitHub Actions: `.github/workflows/test.yml`, `runs-on: self-hosted`. Токен
 src/mcp_server_tochka_bank/
 ├── __init__.py          # main(), версия
 ├── __main__.py          # python -m entry point
-├── server.py            # FastMCP, все tools
-├── tochka_api.py        # HTTP-клиент API Точки
+├── server.py            # FastMCP, 45 tools
+├── tochka_api.py        # HTTP-клиент API Точки (43 метода)
+├── cli.py               # CLI-интерфейс (37 команд)
+├── models.py            # Pydantic-модели (для тестов)
 ├── goods.py             # локальный справочник товаров
 └── invoice_tracker.py   # отслеживание оплаты счетов
 ```

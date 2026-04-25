@@ -8,6 +8,7 @@ import pytest
 from mcp.shared.memory import create_connected_server_and_client_session
 
 from mcp_server_tochka_bank import invoice_tracker
+from mcp_server_tochka_bank.models import InvoiceResponse
 from mcp_server_tochka_bank.server import mcp
 
 MOCK_ACCOUNT = {"accountId": "40702810100000000001/044525000", "customerCode": "100000001", "status": "Enabled"}
@@ -49,6 +50,7 @@ async def test_tochka_invoice():
             assert not result.isError
             data = json.loads(result.content[0].text)
             assert data["documentId"] == "fbc0e703-248d-4083-bfaa-7061e8bc4b18"
+            InvoiceResponse.model_validate(data)
 
             # Проверяем что счёт автоматически добавлен в трекер
             result = await session.call_tool("tochka_pending_invoices", {})

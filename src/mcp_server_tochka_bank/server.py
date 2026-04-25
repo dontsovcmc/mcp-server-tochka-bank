@@ -21,6 +21,10 @@ mcp = FastMCP("tochka-bank")
 SIGN_URL_TEMPLATE = "https://i.tochka.com/bank/m/document_flow/document/{document_id}"
 
 
+def _j(data) -> str:
+    return json.dumps(data, ensure_ascii=False)
+
+
 def _get_api() -> TochkaAPI:
     token = os.getenv("TOCHKA_TOKEN")
     if not token:
@@ -41,7 +45,7 @@ def goods_list() -> str:
 
     Returns JSON array of goods with name, unit, and price.
     """
-    return json.dumps(list_goods(), ensure_ascii=False)
+    return _j(list_goods())
 
 
 @mcp.tool()
@@ -54,7 +58,7 @@ def goods_add(name: str, unit: str, price: str) -> str:
         price: Price per unit as string (e.g. "5290.00")
     """
     item = add_good(name, unit, price)
-    return json.dumps(item, ensure_ascii=False)
+    return _j(item)
 
 
 @mcp.tool()
@@ -65,7 +69,7 @@ def goods_remove(name: str) -> str:
         name: Exact product name to remove
     """
     item = remove_good(name)
-    return json.dumps({"removed": item}, ensure_ascii=False)
+    return _j({"removed": item})
 
 
 # ── Balance ──────────────────────────────────────────────────────────
@@ -97,10 +101,10 @@ def tochka_balance() -> str:
             for b in balances
         ],
     }
-    return json.dumps(result, ensure_ascii=False)
+    return _j(result)
 
 
-# ── Payment ──────────────────────────────────────────────────────────
+# ─��� Payment ────────────────���───────────────────────────────���─────────
 
 
 @mcp.tool()
@@ -145,7 +149,7 @@ def tochka_payment(
         amount=amount,
         purpose=purpose,
     )
-    return json.dumps(data.get("Data", {}), ensure_ascii=False)
+    return _j(data.get("Data", {}))
 
 
 # ── Invoice ──────────────────────────────────────────────────────────
@@ -208,7 +212,7 @@ def tochka_invoice(
     result = data.get("Data", {})
     document_id = result.get("documentId", "")
     add_invoice(number, buyer_inn, buyer_name, total, f"Счёт №{number}", document_id)
-    return json.dumps(result, ensure_ascii=False)
+    return _j(result)
 
 
 # ── Download Invoice ─────────────────────────────────────────────────
@@ -227,7 +231,7 @@ def tochka_download_invoice(document_id: str, output_path: str) -> str:
     pdf = api.download_invoice(acc["customerCode"], document_id)
     with open(output_path, "wb") as f:
         f.write(pdf)
-    return json.dumps({"path": os.path.abspath(output_path)}, ensure_ascii=False)
+    return _j({"path": os.path.abspath(output_path)})
 
 
 # ── UPD ──────────────────────────────────────────────────────────────
@@ -292,7 +296,7 @@ def tochka_upd(
     result = data.get("Data", {})
     doc_id = result.get("documentId", "")
     result["signURL"] = SIGN_URL_TEMPLATE.format(document_id=doc_id)
-    return json.dumps(result, ensure_ascii=False)
+    return _j(result)
 
 
 # ── Search ───────────────────────────────────────────────────────────
@@ -364,7 +368,7 @@ def tochka_search(query: str, days: int = 90) -> str:
         "total": len(matches),
         "transactions": matches,
     }
-    return json.dumps(result, ensure_ascii=False)
+    return _j(result)
 
 
 # ── Incoming ────────────────────────────────────────────────────────
@@ -431,7 +435,7 @@ def tochka_incoming(month: int, year: int, inn: str = "", description: str = "")
         "total_amount": total_amount,
         "total_count": total_count,
     }
-    return json.dumps(result, ensure_ascii=False)
+    return _j(result)
 
 
 # ── Invoice Tracker ─────────────────────────────────────────────────
@@ -450,7 +454,7 @@ def tochka_track_invoice(number: str, buyer_inn: str, buyer_name: str, amount: s
         document_id: Tochka documentId UUID (optional, for invoices created via tochka_invoice)
     """
     item = add_invoice(number, buyer_inn, buyer_name, amount, description, document_id)
-    return json.dumps(item, ensure_ascii=False)
+    return _j(item)
 
 
 @mcp.tool()
@@ -461,7 +465,7 @@ def tochka_untrack_invoice(number: str) -> str:
         number: Invoice number (from tochka_track_invoice or tochka_pending_invoices)
     """
     item = remove_invoice(number)
-    return json.dumps({"removed": item}, ensure_ascii=False)
+    return _j({"removed": item})
 
 
 @mcp.tool()
@@ -470,7 +474,7 @@ def tochka_pending_invoices() -> str:
 
     Returns JSON array of pending invoices with number, buyer_inn, buyer_name, amount, description, created_at.
     """
-    return json.dumps(list_invoices(), ensure_ascii=False)
+    return _j(list_invoices())
 
 
 @mcp.tool()
@@ -492,7 +496,7 @@ def tochka_check_invoices(days: int = 30) -> str:
     """
     pending = list_invoices()
     if not pending:
-        return json.dumps({"paid": [], "pending": []}, ensure_ascii=False)
+        return _j({"paid": [], "pending": []})
 
     api = _get_api()
     acc = _get_account(api)
@@ -549,4 +553,400 @@ def tochka_check_invoices(days: int = 30) -> str:
     for inv in paid:
         remove_invoice(inv["number"])
 
-    return json.dumps({"paid": paid, "pending": still_pending}, ensure_ascii=False)
+    return _j({"paid": paid, "pending": still_pending})
+
+
+# ── Account Detail ──────────────────────────────────────────────────
+
+
+@mcp.tool()
+def tochka_account_detail(account_id: str = "") -> str:
+    """Get detailed account information.
+
+    Args:
+        account_id: Account ID (e.g. "40702810100000000001/044525000"). Uses first account if empty.
+    """
+    api = _get_api()
+    if not account_id:
+        acc = _get_account(api)
+        account_id = acc["accountId"]
+    return _j(api.get_account(account_id))
+
+
+# ── All Balances ────────────────────────────────────────────────────
+
+
+@mcp.tool()
+def tochka_all_balances() -> str:
+    """Get balances for all accounts at once.
+
+    Returns JSON array of balances across all accessible accounts.
+    """
+    api = _get_api()
+    return _j(api.get_all_balances())
+
+
+# ── Statements List ─────────────────────────────────────────────────
+
+
+@mcp.tool()
+def tochka_statements_list(limit: int = 5) -> str:
+    """Get list of recent statements.
+
+    Args:
+        limit: Maximum number of statements (default 5)
+    """
+    api = _get_api()
+    return _j(api.get_statements_list(limit))
+
+
+# ── Card Transactions ───────────────────────────────────────────────
+
+
+@mcp.tool()
+def tochka_card_transactions(account_id: str = "") -> str:
+    """Get authorized card transactions for account.
+
+    Args:
+        account_id: Account ID. Uses first account if empty.
+    """
+    api = _get_api()
+    if not account_id:
+        acc = _get_account(api)
+        account_id = acc["accountId"]
+    return _j(api.get_card_transactions(account_id))
+
+
+# ── Customers ───────────────────────────────────────────────────────
+
+
+@mcp.tool()
+def tochka_customers() -> str:
+    """Get list of all accessible customers (organizations)."""
+    api = _get_api()
+    return _j(api.get_customers())
+
+
+@mcp.tool()
+def tochka_customer(customer_code: str) -> str:
+    """Get detailed customer information.
+
+    Args:
+        customer_code: Customer identifier (e.g. "100000001")
+    """
+    api = _get_api()
+    return _j(api.get_customer(customer_code))
+
+
+# ── Invoice extras ──────────────────────────────────────────────────
+
+
+@mcp.tool()
+def tochka_delete_invoice(document_id: str) -> str:
+    """Delete an invoice by document ID.
+
+    Args:
+        document_id: Invoice UUID from tochka_invoice result
+    """
+    api = _get_api()
+    acc = _get_account(api)
+    return _j(api.delete_invoice(acc["customerCode"], document_id))
+
+
+@mcp.tool()
+def tochka_send_invoice_email(document_id: str, email: str) -> str:
+    """Send invoice to specified email address.
+
+    Args:
+        document_id: Invoice UUID from tochka_invoice result
+        email: Recipient email address
+    """
+    api = _get_api()
+    acc = _get_account(api)
+    return _j(api.send_invoice_email(acc["customerCode"], document_id, email))
+
+
+# ── Closing Document extras ─────────────────────────────────────────
+
+
+@mcp.tool()
+def tochka_delete_closing_document(document_id: str) -> str:
+    """Delete a closing document (UPD/Act) by document ID.
+
+    Args:
+        document_id: Closing document UUID from tochka_upd result
+    """
+    api = _get_api()
+    acc = _get_account(api)
+    return _j(api.delete_closing_document(acc["customerCode"], document_id))
+
+
+@mcp.tool()
+def tochka_send_closing_document_email(document_id: str, email: str) -> str:
+    """Send closing document to specified email address.
+
+    Args:
+        document_id: Closing document UUID from tochka_upd result
+        email: Recipient email address
+    """
+    api = _get_api()
+    acc = _get_account(api)
+    return _j(api.send_closing_document_email(acc["customerCode"], document_id, email))
+
+
+@mcp.tool()
+def tochka_download_closing_document(document_id: str, output_path: str) -> str:
+    """Download closing document PDF to local file.
+
+    Args:
+        document_id: Closing document UUID from tochka_upd result
+        output_path: Absolute path to save PDF (e.g. /tmp/upd_42.pdf)
+    """
+    api = _get_api()
+    acc = _get_account(api)
+    pdf = api.download_closing_document(acc["customerCode"], document_id)
+    with open(output_path, "wb") as f:
+        f.write(pdf)
+    return _j({"path": os.path.abspath(output_path)})
+
+
+# ── Payments List ───────────────────────────────────────────────────
+
+
+@mcp.tool()
+def tochka_payments_for_sign() -> str:
+    """Get list of payment orders created for signing."""
+    api = _get_api()
+    acc = _get_account(api)
+    return _j(api.get_payments_for_sign(acc["customerCode"]))
+
+
+# ── Acquiring ───────────────────────────────────────────────────────
+
+
+@mcp.tool()
+def tochka_acquiring_payments(
+    page: int = 1,
+    per_page: int = 1000,
+    from_date: str = "",
+    to_date: str = "",
+    status: str = "",
+) -> str:
+    """Get list of acquiring payment operations.
+
+    Args:
+        page: Page number (default 1)
+        per_page: Results per page (default 1000)
+        from_date: Start date filter YYYY-MM-DD (optional)
+        to_date: End date filter YYYY-MM-DD (optional)
+        status: Filter by status: CREATED, APPROVED, ON-REFUND, REFUNDED, EXPIRED (optional)
+    """
+    api = _get_api()
+    acc = _get_account(api)
+    return _j(api.get_acquiring_payments(
+        acc["customerCode"], from_date=from_date, to_date=to_date,
+        page=page, per_page=per_page, status=status,
+    ))
+
+
+@mcp.tool()
+def tochka_acquiring_payment_create(payload_json: str) -> str:
+    """Create acquiring payment operation (payment link).
+
+    Args:
+        payload_json: JSON with payment data (customerCode, amount, currency, orderId, description, returnUrl, etc.)
+    """
+    api = _get_api()
+    payload = json.loads(payload_json)
+    return _j(api.create_acquiring_payment(payload))
+
+
+@mcp.tool()
+def tochka_acquiring_payment(operation_id: str) -> str:
+    """Get acquiring payment operation details.
+
+    Args:
+        operation_id: Payment operation ID
+    """
+    api = _get_api()
+    return _j(api.get_acquiring_payment(operation_id))
+
+
+@mcp.tool()
+def tochka_acquiring_payment_capture(operation_id: str, payload_json: str = "{}") -> str:
+    """Capture funds for two-stage acquiring payment.
+
+    Args:
+        operation_id: Payment operation ID
+        payload_json: JSON with capture data (optional)
+    """
+    api = _get_api()
+    payload = json.loads(payload_json)
+    return _j(api.capture_acquiring_payment(operation_id, payload))
+
+
+@mcp.tool()
+def tochka_acquiring_payment_refund(operation_id: str, payload_json: str = "{}") -> str:
+    """Refund an acquiring payment (only for APPROVED status).
+
+    Args:
+        operation_id: Payment operation ID
+        payload_json: JSON with refund data (optional)
+    """
+    api = _get_api()
+    payload = json.loads(payload_json)
+    return _j(api.refund_acquiring_payment(operation_id, payload))
+
+
+@mcp.tool()
+def tochka_acquiring_payment_with_receipt(payload_json: str) -> str:
+    """Create acquiring payment operation with fiscal receipt.
+
+    Args:
+        payload_json: JSON with payment + receipt data
+    """
+    api = _get_api()
+    payload = json.loads(payload_json)
+    return _j(api.create_acquiring_payment_with_receipt(payload))
+
+
+@mcp.tool()
+def tochka_acquiring_registry(merchant_id: str, registry_date: str) -> str:
+    """Get acquiring payment registry for a specific date.
+
+    Args:
+        merchant_id: Merchant identifier
+        registry_date: Registry date YYYY-MM-DD
+    """
+    api = _get_api()
+    acc = _get_account(api)
+    return _j(api.get_acquiring_registry(acc["customerCode"], merchant_id, registry_date))
+
+
+@mcp.tool()
+def tochka_acquiring_retailers() -> str:
+    """Get list of acquiring retailers (merchant points)."""
+    api = _get_api()
+    acc = _get_account(api)
+    return _j(api.get_acquiring_retailers(acc["customerCode"]))
+
+
+# ── Subscriptions ───────────────────────────────────────────────────
+
+
+@mcp.tool()
+def tochka_subscription_create(payload_json: str) -> str:
+    """Create recurring payment subscription.
+
+    Args:
+        payload_json: JSON with subscription data (customerCode, amount, currency, etc.)
+    """
+    api = _get_api()
+    payload = json.loads(payload_json)
+    return _j(api.create_subscription(payload))
+
+
+@mcp.tool()
+def tochka_subscriptions(page: int = 1, per_page: int = 1000) -> str:
+    """Get list of payment subscriptions.
+
+    Args:
+        page: Page number (default 1)
+        per_page: Results per page (default 1000)
+    """
+    api = _get_api()
+    acc = _get_account(api)
+    return _j(api.get_subscriptions(acc["customerCode"], page=page, per_page=per_page))
+
+
+@mcp.tool()
+def tochka_subscription_charge(operation_id: str, payload_json: str) -> str:
+    """Charge a subscription (recurring payment debit).
+
+    Args:
+        operation_id: Subscription operation ID
+        payload_json: JSON with charge data (amount, etc.)
+    """
+    api = _get_api()
+    payload = json.loads(payload_json)
+    return _j(api.charge_subscription(operation_id, payload))
+
+
+@mcp.tool()
+def tochka_subscription_status(operation_id: str) -> str:
+    """Get subscription status.
+
+    Args:
+        operation_id: Subscription operation ID
+    """
+    api = _get_api()
+    return _j(api.get_subscription_status(operation_id))
+
+
+@mcp.tool()
+def tochka_subscription_status_set(operation_id: str, payload_json: str) -> str:
+    """Set subscription status (activate/deactivate).
+
+    Args:
+        operation_id: Subscription operation ID
+        payload_json: JSON with new status data
+    """
+    api = _get_api()
+    payload = json.loads(payload_json)
+    return _j(api.set_subscription_status(operation_id, payload))
+
+
+@mcp.tool()
+def tochka_subscription_with_receipt(payload_json: str) -> str:
+    """Create subscription with fiscal receipt.
+
+    Args:
+        payload_json: JSON with subscription + receipt data
+    """
+    api = _get_api()
+    payload = json.loads(payload_json)
+    return _j(api.create_subscription_with_receipt(payload))
+
+
+# ── Consents ────────────────────────────────────────────────────────
+
+
+@mcp.tool()
+def tochka_consents() -> str:
+    """Get list of all API consents (permissions)."""
+    api = _get_api()
+    return _j(api.get_consents())
+
+
+@mcp.tool()
+def tochka_consent_create(payload_json: str) -> str:
+    """Create a new API consent.
+
+    Args:
+        payload_json: JSON with consent data (permissions list, etc.)
+    """
+    api = _get_api()
+    payload = json.loads(payload_json)
+    return _j(api.create_consent(payload))
+
+
+@mcp.tool()
+def tochka_consent(consent_id: str) -> str:
+    """Get consent details.
+
+    Args:
+        consent_id: Consent identifier
+    """
+    api = _get_api()
+    return _j(api.get_consent(consent_id))
+
+
+@mcp.tool()
+def tochka_consent_children(consent_id: str) -> str:
+    """Get all child consents for a given consent.
+
+    Args:
+        consent_id: Parent consent identifier
+    """
+    api = _get_api()
+    return _j(api.get_consent_children(consent_id))
