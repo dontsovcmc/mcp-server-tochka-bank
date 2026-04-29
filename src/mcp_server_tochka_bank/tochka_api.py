@@ -60,7 +60,7 @@ class TochkaAPI:
                 return acc
         if accounts:
             return accounts[0]
-        raise RuntimeError("Нет доступных счетов")
+        raise RuntimeError("Нет доступных счетов. Use tochka_customers to check accessible customers.")
 
     # --- Баланс ---
 
