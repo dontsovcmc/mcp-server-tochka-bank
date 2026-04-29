@@ -7,8 +7,7 @@ Without arguments starts MCP server (stdio transport).
 import argparse
 import sys
 
-from . import __version__
-from . import server
+from . import __version__, server
 
 
 def main(argv: list[str] | None = None):
@@ -203,13 +202,18 @@ def main(argv: list[str] | None = None):
         "send-invoice-email": lambda: server.tochka_send_invoice_email(args.document_id, args.email),
         "delete-closing-document": lambda: server.tochka_delete_closing_document(args.document_id),
         "send-closing-document-email": lambda: server.tochka_send_closing_document_email(args.document_id, args.email),
-        "download-closing-document": lambda: server.tochka_download_closing_document(args.document_id, args.output_path),
+        "download-closing-document": lambda: server.tochka_download_closing_document(
+            args.document_id, args.output_path),
         "payments-for-sign": lambda: server.tochka_payments_for_sign(),
-        "acquiring-payments": lambda: server.tochka_acquiring_payments(page=args.page, per_page=args.per_page, from_date=args.from_date, to_date=args.to_date, status=args.status),
+        "acquiring-payments": lambda: server.tochka_acquiring_payments(
+            page=args.page, per_page=args.per_page,
+            from_date=args.from_date, to_date=args.to_date, status=args.status),
         "acquiring-payment-create": lambda: server.tochka_acquiring_payment_create(args.payload_json),
         "acquiring-payment": lambda: server.tochka_acquiring_payment(args.operation_id),
-        "acquiring-payment-capture": lambda: server.tochka_acquiring_payment_capture(args.operation_id, payload_json=args.payload_json),
-        "acquiring-payment-refund": lambda: server.tochka_acquiring_payment_refund(args.operation_id, payload_json=args.payload_json),
+        "acquiring-payment-capture": lambda: server.tochka_acquiring_payment_capture(
+            args.operation_id, payload_json=args.payload_json),
+        "acquiring-payment-refund": lambda: server.tochka_acquiring_payment_refund(
+            args.operation_id, payload_json=args.payload_json),
         "acquiring-payment-with-receipt": lambda: server.tochka_acquiring_payment_with_receipt(args.payload_json),
         "acquiring-registry": lambda: server.tochka_acquiring_registry(args.merchant_id, args.registry_date),
         "acquiring-retailers": lambda: server.tochka_acquiring_retailers(),

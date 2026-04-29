@@ -35,15 +35,23 @@ def _parse_json(text: str, label: str = "JSON") -> any:
 
 
 def _safe_output_path(path: str) -> str:
-    """Resolve and validate output path — only home directory or temp allowed."""
+    """Resolve and validate output path — only home or system temp allowed."""
     resolved = os.path.realpath(path)
-    allowed = [
-        os.path.realpath(os.path.expanduser("~")),
-        os.path.realpath("/tmp"),
-        os.path.realpath(tempfile.gettempdir()),
-    ]
-    if not any(resolved.startswith(d + os.sep) for d in allowed):
-        raise RuntimeError(f"Output path must be under home directory or /tmp: {path}")
+    home = os.path.realpath(os.path.expanduser("~"))
+
+    tmp_dirs = {os.path.realpath(tempfile.gettempdir())}
+    if os.path.isdir("/tmp"):
+        tmp_dirs.add(os.path.realpath("/tmp"))
+
+    is_under_home = resolved.startswith(home + os.sep)
+    is_under_tmp = any(resolved.startswith(d + os.sep) for d in tmp_dirs)
+
+    if not (is_under_home or is_under_tmp):
+        raise RuntimeError(f"Output path must be under home or temp directory: {path}")
+
+    if is_under_home and os.sep + "." in resolved[len(home):]:
+        raise RuntimeError(f"Writing to hidden files/directories is not allowed: {path}")
+
     return resolved
 
 
@@ -471,7 +479,10 @@ def tochka_incoming(month: int, year: int, inn: str = "", description: str = "")
 
 
 @mcp.tool()
-def tochka_track_invoice(number: str, buyer_inn: str, buyer_name: str, amount: str, description: str, document_id: str = "") -> str:
+def tochka_track_invoice(
+    number: str, buyer_inn: str, buyer_name: str,
+    amount: str, description: str, document_id: str = "",
+) -> str:
     """Start tracking an invoice for payment. Persists across sessions.
 
     Args:

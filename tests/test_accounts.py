@@ -9,12 +9,18 @@ from mcp.shared.memory import create_connected_server_and_client_session
 from mcp_server_tochka_bank.models import Account, Balance, CardTransaction, StatementListItem
 from mcp_server_tochka_bank.server import mcp
 
-MOCK_ACCOUNT = {"accountId": "40702810100000000001/044525000", "customerCode": "100000001", "status": "Enabled", "currency": "RUB"}
+MOCK_ACCOUNT = {
+    "accountId": "40702810100000000001/044525000",
+    "customerCode": "100000001", "status": "Enabled", "currency": "RUB",
+}
 
 
 @pytest.mark.anyio
 async def test_tochka_account_detail():
-    mock_detail = {"accountId": "40702810100000000001/044525000", "customerCode": "100000001", "status": "Enabled", "currency": "RUB"}
+    mock_detail = {
+        "accountId": "40702810100000000001/044525000",
+        "customerCode": "100000001", "status": "Enabled", "currency": "RUB",
+    }
     Account.model_validate(mock_detail)
 
     with patch("mcp_server_tochka_bank.server.TochkaAPI") as MockAPI:
@@ -33,7 +39,8 @@ async def test_tochka_account_detail():
 @pytest.mark.anyio
 async def test_tochka_all_balances():
     mock_balances = [
-        {"type": "ClosingAvailable", "Amount": {"amount": 50000.0, "currency": "RUB"}, "accountId": "40702810100000000001/044525000"},
+        {"type": "ClosingAvailable", "Amount": {"amount": 50000.0, "currency": "RUB"},
+         "accountId": "40702810100000000001/044525000"},
     ]
     for b in mock_balances:
         Balance.model_validate(b)
