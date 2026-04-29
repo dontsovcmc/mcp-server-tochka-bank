@@ -321,25 +321,96 @@ class TochkaAPI:
             params["status"] = status
         return self._get("/acquiring/v1.0/payments", params=params)
 
-    def create_acquiring_payment(self, payload: dict) -> dict:
+    def create_acquiring_payment(
+        self, customer_code: str, amount: float, purpose: str,
+        payment_mode: list[str],
+        redirect_url: str = "", fail_redirect_url: str = "",
+        save_card: bool | None = None, consumer_id: str = "",
+        merchant_id: str = "", pre_authorization: bool | None = None,
+        ttl: int | None = None, payment_link_id: str = "",
+    ) -> dict:
         """POST /acquiring/v1.0/payments"""
-        return self._post("/acquiring/v1.0/payments", payload)
+        data: dict = {
+            "customerCode": customer_code,
+            "amount": amount,
+            "purpose": purpose,
+            "paymentMode": payment_mode,
+        }
+        if redirect_url:
+            data["redirectUrl"] = redirect_url
+        if fail_redirect_url:
+            data["failRedirectUrl"] = fail_redirect_url
+        if save_card is not None:
+            data["saveCard"] = save_card
+        if consumer_id:
+            data["consumerId"] = consumer_id
+        if merchant_id:
+            data["merchantId"] = merchant_id
+        if pre_authorization is not None:
+            data["preAuthorization"] = pre_authorization
+        if ttl is not None:
+            data["ttl"] = ttl
+        if payment_link_id:
+            data["paymentLinkId"] = payment_link_id
+        return self._post("/acquiring/v1.0/payments", {"Data": data})
 
     def get_acquiring_payment(self, operation_id: str) -> dict:
         """GET /acquiring/v1.0/payments/{operationId}"""
         return self._get(f"/acquiring/v1.0/payments/{operation_id}")
 
-    def capture_acquiring_payment(self, operation_id: str, payload: dict) -> dict:
+    def capture_acquiring_payment(self, operation_id: str) -> dict:
         """POST /acquiring/v1.0/payments/{operationId}/capture"""
-        return self._post(f"/acquiring/v1.0/payments/{operation_id}/capture", payload)
+        return self._post(f"/acquiring/v1.0/payments/{operation_id}/capture", {})
 
-    def refund_acquiring_payment(self, operation_id: str, payload: dict) -> dict:
+    def refund_acquiring_payment(self, operation_id: str, amount: float) -> dict:
         """POST /acquiring/v1.0/payments/{operationId}/refund"""
-        return self._post(f"/acquiring/v1.0/payments/{operation_id}/refund", payload)
+        return self._post(
+            f"/acquiring/v1.0/payments/{operation_id}/refund",
+            {"Data": {"amount": amount}},
+        )
 
-    def create_acquiring_payment_with_receipt(self, payload: dict) -> dict:
+    def create_acquiring_payment_with_receipt(
+        self, customer_code: str, amount: float, purpose: str,
+        payment_mode: list[str], client_email: str, items: list[dict],
+        redirect_url: str = "", fail_redirect_url: str = "",
+        save_card: bool | None = None, consumer_id: str = "",
+        merchant_id: str = "", pre_authorization: bool | None = None,
+        ttl: int | None = None, payment_link_id: str = "",
+        client_name: str = "", client_phone: str = "",
+        tax_system_code: str = "",
+    ) -> dict:
         """POST /acquiring/v1.0/payments_with_receipt"""
-        return self._post("/acquiring/v1.0/payments_with_receipt", payload)
+        data: dict = {
+            "customerCode": customer_code,
+            "amount": amount,
+            "purpose": purpose,
+            "paymentMode": payment_mode,
+        }
+        if redirect_url:
+            data["redirectUrl"] = redirect_url
+        if fail_redirect_url:
+            data["failRedirectUrl"] = fail_redirect_url
+        if save_card is not None:
+            data["saveCard"] = save_card
+        if consumer_id:
+            data["consumerId"] = consumer_id
+        if merchant_id:
+            data["merchantId"] = merchant_id
+        if pre_authorization is not None:
+            data["preAuthorization"] = pre_authorization
+        if ttl is not None:
+            data["ttl"] = ttl
+        if payment_link_id:
+            data["paymentLinkId"] = payment_link_id
+        receipt: dict = {"client": {"email": client_email}, "items": items}
+        if client_name:
+            receipt["client"]["name"] = client_name
+        if client_phone:
+            receipt["client"]["phone"] = client_phone
+        if tax_system_code:
+            receipt["taxSystemCode"] = tax_system_code
+        data["receipt"] = receipt
+        return self._post("/acquiring/v1.0/payments_with_receipt", {"Data": data})
 
     def get_acquiring_registry(self, customer_code: str, merchant_id: str,
                                registry_date: str, payment_id: str = "") -> dict:
@@ -355,9 +426,34 @@ class TochkaAPI:
 
     # --- Подписки ---
 
-    def create_subscription(self, payload: dict) -> dict:
+    def create_subscription(
+        self, customer_code: str, amount: float, purpose: str,
+        redirect_url: str = "", fail_redirect_url: str = "",
+        save_card: bool | None = None, consumer_id: str = "",
+        merchant_id: str = "", recurring: bool | None = None,
+        payment_link_id: str = "",
+    ) -> dict:
         """POST /acquiring/v1.0/subscriptions"""
-        return self._post("/acquiring/v1.0/subscriptions", payload)
+        data: dict = {
+            "customerCode": customer_code,
+            "amount": amount,
+            "purpose": purpose,
+        }
+        if redirect_url:
+            data["redirectUrl"] = redirect_url
+        if fail_redirect_url:
+            data["failRedirectUrl"] = fail_redirect_url
+        if save_card is not None:
+            data["saveCard"] = save_card
+        if consumer_id:
+            data["consumerId"] = consumer_id
+        if merchant_id:
+            data["merchantId"] = merchant_id
+        if recurring is not None:
+            data["recurring"] = recurring
+        if payment_link_id:
+            data["paymentLinkId"] = payment_link_id
+        return self._post("/acquiring/v1.0/subscriptions", {"Data": data})
 
     def get_subscriptions(self, customer_code: str, page: int = 1,
                           per_page: int = 1000, recurring: str = "") -> dict:
@@ -367,21 +463,63 @@ class TochkaAPI:
             params["recurring"] = recurring
         return self._get("/acquiring/v1.0/subscriptions", params=params)
 
-    def charge_subscription(self, operation_id: str, payload: dict) -> dict:
+    def charge_subscription(self, operation_id: str, amount: float) -> dict:
         """POST /acquiring/v1.0/subscriptions/{operationId}/charge"""
-        return self._post(f"/acquiring/v1.0/subscriptions/{operation_id}/charge", payload)
+        return self._post(
+            f"/acquiring/v1.0/subscriptions/{operation_id}/charge",
+            {"Data": {"amount": amount}},
+        )
 
     def get_subscription_status(self, operation_id: str) -> dict:
         """GET /acquiring/v1.0/subscriptions/{operationId}/status"""
         return self._get(f"/acquiring/v1.0/subscriptions/{operation_id}/status")
 
-    def set_subscription_status(self, operation_id: str, payload: dict) -> dict:
+    def set_subscription_status(self, operation_id: str, status: str) -> dict:
         """POST /acquiring/v1.0/subscriptions/{operationId}/status"""
-        return self._post(f"/acquiring/v1.0/subscriptions/{operation_id}/status", payload)
+        return self._post(
+            f"/acquiring/v1.0/subscriptions/{operation_id}/status",
+            {"Data": {"status": status}},
+        )
 
-    def create_subscription_with_receipt(self, payload: dict) -> dict:
+    def create_subscription_with_receipt(
+        self, customer_code: str, amount: float, purpose: str,
+        client_email: str, items: list[dict],
+        redirect_url: str = "", fail_redirect_url: str = "",
+        save_card: bool | None = None, consumer_id: str = "",
+        merchant_id: str = "", recurring: bool | None = None,
+        payment_link_id: str = "",
+        client_name: str = "", client_phone: str = "",
+        tax_system_code: str = "",
+    ) -> dict:
         """POST /acquiring/v1.0/subscriptions_with_receipt"""
-        return self._post("/acquiring/v1.0/subscriptions_with_receipt", payload)
+        data: dict = {
+            "customerCode": customer_code,
+            "amount": amount,
+            "purpose": purpose,
+        }
+        if redirect_url:
+            data["redirectUrl"] = redirect_url
+        if fail_redirect_url:
+            data["failRedirectUrl"] = fail_redirect_url
+        if save_card is not None:
+            data["saveCard"] = save_card
+        if consumer_id:
+            data["consumerId"] = consumer_id
+        if merchant_id:
+            data["merchantId"] = merchant_id
+        if recurring is not None:
+            data["recurring"] = recurring
+        if payment_link_id:
+            data["paymentLinkId"] = payment_link_id
+        receipt: dict = {"client": {"email": client_email}, "items": items}
+        if client_name:
+            receipt["client"]["name"] = client_name
+        if client_phone:
+            receipt["client"]["phone"] = client_phone
+        if tax_system_code:
+            receipt["taxSystemCode"] = tax_system_code
+        data["receipt"] = receipt
+        return self._post("/acquiring/v1.0/subscriptions_with_receipt", {"Data": data})
 
     # --- Разрешения (Consents) ---
 
@@ -392,9 +530,14 @@ class TochkaAPI:
             headers["customer-code"] = customer_code
         return self._get("/consent/v1.0/consents", headers=headers)
 
-    def create_consent(self, payload: dict) -> dict:
+    def create_consent(
+        self, permissions: list[str], expiration_date_time: str = "",
+    ) -> dict:
         """POST /consent/v1.0/consents"""
-        return self._post("/consent/v1.0/consents", payload)
+        data: dict = {"permissions": permissions}
+        if expiration_date_time:
+            data["expirationDateTime"] = expiration_date_time
+        return self._post("/consent/v1.0/consents", {"Data": data})
 
     def get_consent(self, consent_id: str, customer_code: str = "") -> dict:
         """GET /consent/v1.0/consents/{consentId}"""

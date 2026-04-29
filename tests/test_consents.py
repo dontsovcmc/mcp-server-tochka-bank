@@ -38,8 +38,9 @@ async def test_tochka_consent_create():
         instance.create_consent.return_value = mock_response
 
         async with create_connected_server_and_client_session(mcp._mcp_server) as session:
-            payload = json.dumps({"Data": {"permissions": ["ReadAccountsBasic", "ReadBalances"]}})
-            result = await session.call_tool("tochka_consent_create", {"payload_json": payload})
+            result = await session.call_tool("tochka_consent_create", {
+                "permissions": ["ReadAccountsBasic", "ReadBalances"],
+            })
             assert not result.isError
             data = json.loads(result.content[0].text)
             Consent.model_validate(data.get("Data", {}))

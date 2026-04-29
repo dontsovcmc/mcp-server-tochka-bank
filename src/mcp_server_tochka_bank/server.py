@@ -866,17 +866,47 @@ def tochka_acquiring_payments(
 
 
 @mcp.tool(annotations=_WRITE)
-def tochka_acquiring_payment_create(payload_json: str) -> str:
+def tochka_acquiring_payment_create(
+    customer_code: str,
+    amount: float,
+    purpose: str,
+    payment_mode: list[str],
+    redirect_url: str = "",
+    fail_redirect_url: str = "",
+    save_card: bool | None = None,
+    consumer_id: str = "",
+    merchant_id: str = "",
+    pre_authorization: bool | None = None,
+    ttl: int | None = None,
+    payment_link_id: str = "",
+) -> str:
     """Create acquiring payment operation (payment link).
 
     For payment with fiscal receipt, use tochka_acquiring_payment_with_receipt.
 
     Args:
-        payload_json: JSON with payment data (customerCode, amount, currency, orderId, description, returnUrl, etc.)
+        customer_code: Customer code (9 chars, e.g. "100000001")
+        amount: Payment amount (> 0)
+        purpose: Payment purpose (1-140 chars)
+        payment_mode: Allowed payment methods, e.g. ["sbp", "card"]
+        redirect_url: Success redirect URL (optional)
+        fail_redirect_url: Failure redirect URL (optional)
+        save_card: Save card for future payments (optional)
+        consumer_id: Consumer identifier (optional)
+        merchant_id: Merchant identifier, 15 chars (optional)
+        pre_authorization: Two-stage payment mode (optional)
+        ttl: Link lifetime in minutes, 1-44640, default 10080 (optional)
+        payment_link_id: Custom payment link ID, 1-45 chars (optional)
     """
     api = _get_api()
-    payload = _parse_json(payload_json, "payload")
-    return _to_json(api.create_acquiring_payment(payload))
+    return _to_json(api.create_acquiring_payment(
+        customer_code=customer_code, amount=amount, purpose=purpose,
+        payment_mode=payment_mode, redirect_url=redirect_url,
+        fail_redirect_url=fail_redirect_url, save_card=save_card,
+        consumer_id=consumer_id, merchant_id=merchant_id,
+        pre_authorization=pre_authorization, ttl=ttl,
+        payment_link_id=payment_link_id,
+    ))
 
 
 @mcp.tool(annotations=_RO)
@@ -891,43 +921,82 @@ def tochka_acquiring_payment(operation_id: str) -> str:
 
 
 @mcp.tool(annotations=_WRITE)
-def tochka_acquiring_payment_capture(operation_id: str, payload_json: str = "{}") -> str:
+def tochka_acquiring_payment_capture(operation_id: str) -> str:
     """Capture funds for two-stage acquiring payment.
 
     Args:
         operation_id: Payment operation ID
-        payload_json: JSON with capture data (optional)
     """
     api = _get_api()
-    payload = _parse_json(payload_json, "payload")
-    return _to_json(api.capture_acquiring_payment(operation_id, payload))
+    return _to_json(api.capture_acquiring_payment(operation_id))
 
 
 @mcp.tool(annotations=_DELETE)
-def tochka_acquiring_payment_refund(operation_id: str, payload_json: str = "{}") -> str:
+def tochka_acquiring_payment_refund(operation_id: str, amount: float) -> str:
     """Refund an acquiring payment (only for APPROVED status).
 
     Args:
         operation_id: Payment operation ID
-        payload_json: JSON with refund data (optional)
+        amount: Refund amount (must not exceed payment amount)
     """
     api = _get_api()
-    payload = _parse_json(payload_json, "payload")
-    return _to_json(api.refund_acquiring_payment(operation_id, payload))
+    return _to_json(api.refund_acquiring_payment(operation_id, amount))
 
 
 @mcp.tool(annotations=_WRITE)
-def tochka_acquiring_payment_with_receipt(payload_json: str) -> str:
+def tochka_acquiring_payment_with_receipt(
+    customer_code: str,
+    amount: float,
+    purpose: str,
+    payment_mode: list[str],
+    client_email: str,
+    items_json: str,
+    redirect_url: str = "",
+    fail_redirect_url: str = "",
+    save_card: bool | None = None,
+    consumer_id: str = "",
+    merchant_id: str = "",
+    pre_authorization: bool | None = None,
+    ttl: int | None = None,
+    payment_link_id: str = "",
+    client_name: str = "",
+    client_phone: str = "",
+    tax_system_code: str = "",
+) -> str:
     """Create acquiring payment operation with fiscal receipt.
 
     For payment without receipt, use tochka_acquiring_payment_create.
 
     Args:
-        payload_json: JSON with payment + receipt data
+        customer_code: Customer code (9 chars, e.g. "100000001")
+        amount: Payment amount (> 0)
+        purpose: Payment purpose (1-140 chars)
+        payment_mode: Allowed payment methods, e.g. ["sbp", "card"]
+        client_email: Receipt recipient email
+        items_json: JSON array of receipt items [{name, amount, quantity, vatType?, paymentMethod?, paymentObject?}]
+        redirect_url: Success redirect URL (optional)
+        fail_redirect_url: Failure redirect URL (optional)
+        save_card: Save card for future payments (optional)
+        consumer_id: Consumer identifier (optional)
+        merchant_id: Merchant identifier, 15 chars (optional)
+        pre_authorization: Two-stage payment mode (optional)
+        ttl: Link lifetime in minutes, 1-44640, default 10080 (optional)
+        payment_link_id: Custom payment link ID, 1-45 chars (optional)
+        client_name: Receipt recipient name (optional)
+        client_phone: Receipt recipient phone (optional)
+        tax_system_code: Tax system: osn, usn_income, usn_income_outcome, esn, patent (optional)
     """
     api = _get_api()
-    payload = _parse_json(payload_json, "payload")
-    return _to_json(api.create_acquiring_payment_with_receipt(payload))
+    items = _parse_json(items_json, "items")
+    return _to_json(api.create_acquiring_payment_with_receipt(
+        customer_code=customer_code, amount=amount, purpose=purpose,
+        payment_mode=payment_mode, client_email=client_email, items=items,
+        redirect_url=redirect_url, fail_redirect_url=fail_redirect_url,
+        save_card=save_card, consumer_id=consumer_id, merchant_id=merchant_id,
+        pre_authorization=pre_authorization, ttl=ttl,
+        payment_link_id=payment_link_id, client_name=client_name,
+        client_phone=client_phone, tax_system_code=tax_system_code,
+    ))
 
 
 @mcp.tool(annotations=_RO)
@@ -957,17 +1026,42 @@ def tochka_acquiring_retailers() -> str:
 
 
 @mcp.tool(annotations=_WRITE)
-def tochka_subscription_create(payload_json: str) -> str:
+def tochka_subscription_create(
+    customer_code: str,
+    amount: float,
+    purpose: str,
+    redirect_url: str = "",
+    fail_redirect_url: str = "",
+    save_card: bool | None = None,
+    consumer_id: str = "",
+    merchant_id: str = "",
+    recurring: bool | None = None,
+    payment_link_id: str = "",
+) -> str:
     """Create recurring payment subscription.
 
     For subscription with fiscal receipt, use tochka_subscription_with_receipt.
 
     Args:
-        payload_json: JSON with subscription data (customerCode, amount, currency, etc.)
+        customer_code: Customer code (9 chars, e.g. "100000001")
+        amount: Subscription amount (> 0)
+        purpose: Subscription purpose (1-140 chars)
+        redirect_url: Success redirect URL (optional)
+        fail_redirect_url: Failure redirect URL (optional)
+        save_card: Save card for future payments (optional)
+        consumer_id: Consumer identifier (optional)
+        merchant_id: Merchant identifier (optional)
+        recurring: Enable recurring charges (optional)
+        payment_link_id: Custom payment link ID, 1-45 chars (optional)
     """
     api = _get_api()
-    payload = _parse_json(payload_json, "payload")
-    return _to_json(api.create_subscription(payload))
+    return _to_json(api.create_subscription(
+        customer_code=customer_code, amount=amount, purpose=purpose,
+        redirect_url=redirect_url, fail_redirect_url=fail_redirect_url,
+        save_card=save_card, consumer_id=consumer_id,
+        merchant_id=merchant_id, recurring=recurring,
+        payment_link_id=payment_link_id,
+    ))
 
 
 @mcp.tool(annotations=_RO)
@@ -984,16 +1078,15 @@ def tochka_subscriptions(page: int = 1, per_page: int = 1000) -> str:
 
 
 @mcp.tool(annotations=_WRITE)
-def tochka_subscription_charge(operation_id: str, payload_json: str) -> str:
+def tochka_subscription_charge(operation_id: str, amount: float) -> str:
     """Charge a subscription (recurring payment debit).
 
     Args:
         operation_id: Subscription operation ID
-        payload_json: JSON with charge data (amount, etc.)
+        amount: Charge amount
     """
     api = _get_api()
-    payload = _parse_json(payload_json, "payload")
-    return _to_json(api.charge_subscription(operation_id, payload))
+    return _to_json(api.charge_subscription(operation_id, amount))
 
 
 @mcp.tool(annotations=_RO)
@@ -1008,30 +1101,70 @@ def tochka_subscription_status(operation_id: str) -> str:
 
 
 @mcp.tool(annotations=_WRITE)
-def tochka_subscription_status_set(operation_id: str, payload_json: str) -> str:
-    """Set subscription status (activate/deactivate).
+def tochka_subscription_status_set(
+    operation_id: str,
+    status: Literal["Cancelled"],
+) -> str:
+    """Set subscription status (cancel subscription).
 
     Args:
         operation_id: Subscription operation ID
-        payload_json: JSON with new status data
+        status: New status (only "Cancelled" is allowed)
     """
     api = _get_api()
-    payload = _parse_json(payload_json, "payload")
-    return _to_json(api.set_subscription_status(operation_id, payload))
+    return _to_json(api.set_subscription_status(operation_id, status))
 
 
 @mcp.tool(annotations=_WRITE)
-def tochka_subscription_with_receipt(payload_json: str) -> str:
+def tochka_subscription_with_receipt(
+    customer_code: str,
+    amount: float,
+    purpose: str,
+    client_email: str,
+    items_json: str,
+    redirect_url: str = "",
+    fail_redirect_url: str = "",
+    save_card: bool | None = None,
+    consumer_id: str = "",
+    merchant_id: str = "",
+    recurring: bool | None = None,
+    payment_link_id: str = "",
+    client_name: str = "",
+    client_phone: str = "",
+    tax_system_code: str = "",
+) -> str:
     """Create subscription with fiscal receipt.
 
     For subscription without receipt, use tochka_subscription_create.
 
     Args:
-        payload_json: JSON with subscription + receipt data
+        customer_code: Customer code (9 chars, e.g. "100000001")
+        amount: Subscription amount (> 0)
+        purpose: Subscription purpose (1-140 chars)
+        client_email: Receipt recipient email
+        items_json: JSON array of receipt items [{name, amount, quantity, vatType?, paymentMethod?, paymentObject?}]
+        redirect_url: Success redirect URL (optional)
+        fail_redirect_url: Failure redirect URL (optional)
+        save_card: Save card for future payments (optional)
+        consumer_id: Consumer identifier (optional)
+        merchant_id: Merchant identifier (optional)
+        recurring: Enable recurring charges (optional)
+        payment_link_id: Custom payment link ID, 1-45 chars (optional)
+        client_name: Receipt recipient name (optional)
+        client_phone: Receipt recipient phone (optional)
+        tax_system_code: Tax system: osn, usn_income, usn_income_outcome, esn, patent (optional)
     """
     api = _get_api()
-    payload = _parse_json(payload_json, "payload")
-    return _to_json(api.create_subscription_with_receipt(payload))
+    items = _parse_json(items_json, "items")
+    return _to_json(api.create_subscription_with_receipt(
+        customer_code=customer_code, amount=amount, purpose=purpose,
+        client_email=client_email, items=items,
+        redirect_url=redirect_url, fail_redirect_url=fail_redirect_url,
+        save_card=save_card, consumer_id=consumer_id,
+        merchant_id=merchant_id, recurring=recurring,
+        payment_link_id=payment_link_id, client_name=client_name,
+        client_phone=client_phone, tax_system_code=tax_system_code,
+    ))
 
 
 # ── Consents ────────────────────────────────────────────────────────
@@ -1045,15 +1178,21 @@ def tochka_consents() -> str:
 
 
 @mcp.tool(annotations=_WRITE)
-def tochka_consent_create(payload_json: str) -> str:
+def tochka_consent_create(
+    permissions: list[str],
+    expiration_date_time: str = "",
+) -> str:
     """Create a new API consent.
 
     Args:
-        payload_json: JSON with consent data (permissions list, etc.)
+        permissions: List of permission strings (e.g. ["ReadAccountsBasic", "ReadBalances"])
+        expiration_date_time: Consent expiry in ISO8601 format (optional)
     """
     api = _get_api()
-    payload = _parse_json(payload_json, "payload")
-    return _to_json(api.create_consent(payload))
+    return _to_json(api.create_consent(
+        permissions=permissions,
+        expiration_date_time=expiration_date_time,
+    ))
 
 
 @mcp.tool(annotations=_RO)

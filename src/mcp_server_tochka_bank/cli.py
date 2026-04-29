@@ -110,7 +110,18 @@ def main(argv: list[str] | None = None):
 
     # acquiring-payment-create
     p = sub.add_parser("acquiring-payment-create", help="Создать платёж эквайринга")
-    p.add_argument("payload_json", help="JSON с данными платежа")
+    p.add_argument("--customer-code", required=True, help="Код клиента (9 символов)")
+    p.add_argument("--amount", type=float, required=True, help="Сумма платежа")
+    p.add_argument("--purpose", required=True, help="Назначение платежа (1-140 символов)")
+    p.add_argument("--payment-mode", required=True, help="Способы оплаты через запятую: sbp,card,tinkoff,dolyame")
+    p.add_argument("--redirect-url", default="", help="URL редиректа при успехе")
+    p.add_argument("--fail-redirect-url", default="", help="URL редиректа при ошибке")
+    p.add_argument("--save-card", type=bool, default=None, help="Сохранить карту")
+    p.add_argument("--consumer-id", default="", help="ID потребителя")
+    p.add_argument("--merchant-id", default="", help="ID мерчанта (15 символов)")
+    p.add_argument("--pre-authorization", type=bool, default=None, help="Двухстадийный платёж")
+    p.add_argument("--ttl", type=int, default=None, help="Время жизни ссылки в минутах (1-44640)")
+    p.add_argument("--payment-link-id", default="", help="ID платёжной ссылки (1-45 символов)")
 
     # acquiring-payment
     p = sub.add_parser("acquiring-payment", help="Детали платежа эквайринга")
@@ -119,16 +130,31 @@ def main(argv: list[str] | None = None):
     # acquiring-payment-capture
     p = sub.add_parser("acquiring-payment-capture", help="Списать средства (двухстадийный платёж)")
     p.add_argument("operation_id", help="ID операции")
-    p.add_argument("--payload-json", default="{}")
 
     # acquiring-payment-refund
     p = sub.add_parser("acquiring-payment-refund", help="Возврат платежа эквайринга")
     p.add_argument("operation_id", help="ID операции")
-    p.add_argument("--payload-json", default="{}")
+    p.add_argument("--amount", type=float, required=True, help="Сумма возврата")
 
     # acquiring-payment-with-receipt
     p = sub.add_parser("acquiring-payment-with-receipt", help="Создать платёж с чеком")
-    p.add_argument("payload_json", help="JSON с данными платежа и чека")
+    p.add_argument("--customer-code", required=True, help="Код клиента (9 символов)")
+    p.add_argument("--amount", type=float, required=True, help="Сумма платежа")
+    p.add_argument("--purpose", required=True, help="Назначение платежа (1-140 символов)")
+    p.add_argument("--payment-mode", required=True, help="Способы оплаты через запятую: sbp,card")
+    p.add_argument("--client-email", required=True, help="Email получателя чека")
+    p.add_argument("--items-json", required=True, help="JSON массив позиций чека")
+    p.add_argument("--redirect-url", default="", help="URL редиректа при успехе")
+    p.add_argument("--fail-redirect-url", default="", help="URL редиректа при ошибке")
+    p.add_argument("--save-card", type=bool, default=None, help="Сохранить карту")
+    p.add_argument("--consumer-id", default="", help="ID потребителя")
+    p.add_argument("--merchant-id", default="", help="ID мерчанта (15 символов)")
+    p.add_argument("--pre-authorization", type=bool, default=None, help="Двухстадийный платёж")
+    p.add_argument("--ttl", type=int, default=None, help="Время жизни ссылки в минутах")
+    p.add_argument("--payment-link-id", default="", help="ID платёжной ссылки")
+    p.add_argument("--client-name", default="", help="Имя получателя чека")
+    p.add_argument("--client-phone", default="", help="Телефон получателя чека")
+    p.add_argument("--tax-system-code", default="", help="Система налогообложения")
 
     # acquiring-registry
     p = sub.add_parser("acquiring-registry", help="Реестр платежей эквайринга")
@@ -140,7 +166,16 @@ def main(argv: list[str] | None = None):
 
     # subscription-create
     p = sub.add_parser("subscription-create", help="Создать подписку")
-    p.add_argument("payload_json", help="JSON с данными подписки")
+    p.add_argument("--customer-code", required=True, help="Код клиента (9 символов)")
+    p.add_argument("--amount", type=float, required=True, help="Сумма подписки")
+    p.add_argument("--purpose", required=True, help="Назначение подписки (1-140 символов)")
+    p.add_argument("--redirect-url", default="", help="URL редиректа при успехе")
+    p.add_argument("--fail-redirect-url", default="", help="URL редиректа при ошибке")
+    p.add_argument("--save-card", type=bool, default=None, help="Сохранить карту")
+    p.add_argument("--consumer-id", default="", help="ID потребителя")
+    p.add_argument("--merchant-id", default="", help="ID мерчанта")
+    p.add_argument("--recurring", type=bool, default=None, help="Рекуррентные списания")
+    p.add_argument("--payment-link-id", default="", help="ID платёжной ссылки (1-45 символов)")
 
     # subscriptions
     p = sub.add_parser("subscriptions", help="Список подписок")
@@ -150,7 +185,7 @@ def main(argv: list[str] | None = None):
     # subscription-charge
     p = sub.add_parser("subscription-charge", help="Списание по подписке")
     p.add_argument("operation_id", help="ID подписки")
-    p.add_argument("payload_json", help="JSON с данными списания")
+    p.add_argument("--amount", type=float, required=True, help="Сумма списания")
 
     # subscription-status
     p = sub.add_parser("subscription-status", help="Статус подписки")
@@ -159,18 +194,33 @@ def main(argv: list[str] | None = None):
     # subscription-status-set
     p = sub.add_parser("subscription-status-set", help="Установить статус подписки")
     p.add_argument("operation_id", help="ID подписки")
-    p.add_argument("payload_json", help="JSON со статусом")
+    p.add_argument("--status", required=True, help="Новый статус (только Cancelled)")
 
     # subscription-with-receipt
     p = sub.add_parser("subscription-with-receipt", help="Создать подписку с чеком")
-    p.add_argument("payload_json", help="JSON с данными подписки и чека")
+    p.add_argument("--customer-code", required=True, help="Код клиента (9 символов)")
+    p.add_argument("--amount", type=float, required=True, help="Сумма подписки")
+    p.add_argument("--purpose", required=True, help="Назначение подписки (1-140 символов)")
+    p.add_argument("--client-email", required=True, help="Email получателя чека")
+    p.add_argument("--items-json", required=True, help="JSON массив позиций чека")
+    p.add_argument("--redirect-url", default="", help="URL редиректа при успехе")
+    p.add_argument("--fail-redirect-url", default="", help="URL редиректа при ошибке")
+    p.add_argument("--save-card", type=bool, default=None, help="Сохранить карту")
+    p.add_argument("--consumer-id", default="", help="ID потребителя")
+    p.add_argument("--merchant-id", default="", help="ID мерчанта")
+    p.add_argument("--recurring", type=bool, default=None, help="Рекуррентные списания")
+    p.add_argument("--payment-link-id", default="", help="ID платёжной ссылки")
+    p.add_argument("--client-name", default="", help="Имя получателя чека")
+    p.add_argument("--client-phone", default="", help="Телефон получателя чека")
+    p.add_argument("--tax-system-code", default="", help="Система налогообложения")
 
     # consents
     sub.add_parser("consents", help="Список разрешений API")
 
     # consent-create
     p = sub.add_parser("consent-create", help="Создать разрешение")
-    p.add_argument("payload_json", help="JSON с данными разрешения")
+    p.add_argument("--permissions", required=True, help="Разрешения через запятую (ReadAccountsBasic,ReadBalances)")
+    p.add_argument("--expiration-date-time", default="", help="Срок действия в формате ISO8601")
 
     # consent
     p = sub.add_parser("consent", help="Детали разрешения")
@@ -208,23 +258,56 @@ def main(argv: list[str] | None = None):
         "acquiring-payments": lambda: server.tochka_acquiring_payments(
             page=args.page, per_page=args.per_page,
             from_date=args.from_date, to_date=args.to_date, status=args.status),
-        "acquiring-payment-create": lambda: server.tochka_acquiring_payment_create(args.payload_json),
+        "acquiring-payment-create": lambda: server.tochka_acquiring_payment_create(
+            customer_code=args.customer_code, amount=args.amount,
+            purpose=args.purpose,
+            payment_mode=[m.strip() for m in args.payment_mode.split(",")],
+            redirect_url=args.redirect_url, fail_redirect_url=args.fail_redirect_url,
+            save_card=args.save_card, consumer_id=args.consumer_id,
+            merchant_id=args.merchant_id, pre_authorization=args.pre_authorization,
+            ttl=args.ttl, payment_link_id=args.payment_link_id),
         "acquiring-payment": lambda: server.tochka_acquiring_payment(args.operation_id),
-        "acquiring-payment-capture": lambda: server.tochka_acquiring_payment_capture(
-            args.operation_id, payload_json=args.payload_json),
+        "acquiring-payment-capture": lambda: server.tochka_acquiring_payment_capture(args.operation_id),
         "acquiring-payment-refund": lambda: server.tochka_acquiring_payment_refund(
-            args.operation_id, payload_json=args.payload_json),
-        "acquiring-payment-with-receipt": lambda: server.tochka_acquiring_payment_with_receipt(args.payload_json),
+            args.operation_id, amount=args.amount),
+        "acquiring-payment-with-receipt": lambda: server.tochka_acquiring_payment_with_receipt(
+            customer_code=args.customer_code, amount=args.amount,
+            purpose=args.purpose,
+            payment_mode=[m.strip() for m in args.payment_mode.split(",")],
+            client_email=args.client_email, items_json=args.items_json,
+            redirect_url=args.redirect_url, fail_redirect_url=args.fail_redirect_url,
+            save_card=args.save_card, consumer_id=args.consumer_id,
+            merchant_id=args.merchant_id, pre_authorization=args.pre_authorization,
+            ttl=args.ttl, payment_link_id=args.payment_link_id,
+            client_name=args.client_name, client_phone=args.client_phone,
+            tax_system_code=args.tax_system_code),
         "acquiring-registry": lambda: server.tochka_acquiring_registry(args.merchant_id, args.registry_date),
         "acquiring-retailers": lambda: server.tochka_acquiring_retailers(),
-        "subscription-create": lambda: server.tochka_subscription_create(args.payload_json),
+        "subscription-create": lambda: server.tochka_subscription_create(
+            customer_code=args.customer_code, amount=args.amount,
+            purpose=args.purpose, redirect_url=args.redirect_url,
+            fail_redirect_url=args.fail_redirect_url, save_card=args.save_card,
+            consumer_id=args.consumer_id, merchant_id=args.merchant_id,
+            recurring=args.recurring, payment_link_id=args.payment_link_id),
         "subscriptions": lambda: server.tochka_subscriptions(page=args.page, per_page=args.per_page),
-        "subscription-charge": lambda: server.tochka_subscription_charge(args.operation_id, args.payload_json),
+        "subscription-charge": lambda: server.tochka_subscription_charge(
+            args.operation_id, amount=args.amount),
         "subscription-status": lambda: server.tochka_subscription_status(args.operation_id),
-        "subscription-status-set": lambda: server.tochka_subscription_status_set(args.operation_id, args.payload_json),
-        "subscription-with-receipt": lambda: server.tochka_subscription_with_receipt(args.payload_json),
+        "subscription-status-set": lambda: server.tochka_subscription_status_set(
+            args.operation_id, status=args.status),
+        "subscription-with-receipt": lambda: server.tochka_subscription_with_receipt(
+            customer_code=args.customer_code, amount=args.amount,
+            purpose=args.purpose, client_email=args.client_email,
+            items_json=args.items_json, redirect_url=args.redirect_url,
+            fail_redirect_url=args.fail_redirect_url, save_card=args.save_card,
+            consumer_id=args.consumer_id, merchant_id=args.merchant_id,
+            recurring=args.recurring, payment_link_id=args.payment_link_id,
+            client_name=args.client_name, client_phone=args.client_phone,
+            tax_system_code=args.tax_system_code),
         "consents": lambda: server.tochka_consents(),
-        "consent-create": lambda: server.tochka_consent_create(args.payload_json),
+        "consent-create": lambda: server.tochka_consent_create(
+            permissions=[p.strip() for p in args.permissions.split(",")],
+            expiration_date_time=args.expiration_date_time),
         "consent": lambda: server.tochka_consent(args.consent_id),
         "consent-children": lambda: server.tochka_consent_children(args.consent_id),
     }
