@@ -130,3 +130,11 @@ CLAUDE_DEBUG=1 claude        # максимум логов
 | Сервер запускается вручную, но не в Claude | PATH в Claude отличается от PATH в терминале | Используйте абсолютный путь |
 | `No module named mcp_server_tochka_bank` | pip установил в другой Python | Используйте entry point `mcp-server-tochka-bank` вместо `python -m` |
 | Таймаут при подключении | Сервер не ответил за 10 секунд | Проверьте сеть и токен |
+
+## Публикация версии
+
+Сборка, загрузка в PyPI и публикация в MCP Registry — одной командой:
+
+```bash
+python3 -m build && twine upload dist/* && rm -rf ./dist && mcp-publisher login github && mcp-publisher publish
+```
