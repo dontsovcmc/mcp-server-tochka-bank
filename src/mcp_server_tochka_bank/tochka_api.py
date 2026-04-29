@@ -141,13 +141,7 @@ class TochkaAPI:
     # --- Скачивание ---
 
     def download_invoice(self, customer_code: str, document_id: str) -> bytes:
-        resp = self.session.get(
-            f"{BASE_URL}/invoice/v1.0/bills/{customer_code}/{document_id}/file",
-            timeout=30,
-        )
-        if not resp.ok:
-            raise RuntimeError(f"Download invoice -> {resp.status_code}: {resp.text}")
-        return resp.content
+        return self._get_bytes(f"/invoice/v1.0/bills/{customer_code}/{document_id}/file")
 
     # --- УПД ---
 
@@ -224,7 +218,9 @@ class TochkaAPI:
 
     def get_statement_ready(self, account_id: str, statement_id: str,
                             max_wait: int = 60) -> dict:
-        for _ in range(max_wait // 2):
+        delay = 2
+        elapsed = 0
+        while elapsed < max_wait:
             data = self.get_statement(account_id, statement_id)
             statements = data.get("Data", {}).get("Statement", [])
             if isinstance(statements, dict):
@@ -233,7 +229,9 @@ class TochkaAPI:
                 return statements[0]
             if statements and statements[0].get("status") == "Error":
                 raise RuntimeError(f"Ошибка формирования выписки: {statements[0]}")
-            time.sleep(2)
+            time.sleep(delay)
+            elapsed += delay
+            delay = min(delay * 2, 16)
         raise RuntimeError(f"Выписка не готова за {max_wait} секунд")
 
     # --- Счёт (детали) ---

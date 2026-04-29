@@ -32,14 +32,6 @@ class Account(BaseModel):
     currency: Optional[str] = None
 
 
-class AccountDetail(BaseModel):
-    model_config = ConfigDict(extra="allow")
-    accountId: str
-    customerCode: Optional[str] = None
-    status: Optional[str] = None
-    currency: Optional[str] = None
-
-
 # ── Balances ────────────────────────────────────────────────────────
 
 
