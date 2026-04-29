@@ -1,6 +1,7 @@
 """Тесты: tochka_delete_invoice, tochka_send_invoice_email, tochka_delete_closing_document, tochka_send_closing_document_email, tochka_download_closing_document."""
 
 import json
+import os
 from unittest.mock import patch, mock_open
 
 import pytest
@@ -82,4 +83,4 @@ async def test_tochka_download_closing_document():
                 assert not result.isError
                 data = json.loads(result.content[0].text)
                 assert "path" in data
-                m.assert_called_once_with("/tmp/test_upd.pdf", "wb")
+                m.assert_called_once_with(os.path.realpath("/tmp/test_upd.pdf"), "wb")

@@ -6,7 +6,7 @@ from unittest.mock import patch
 import pytest
 from mcp.shared.memory import create_connected_server_and_client_session
 
-from mcp_server_tochka_bank.models import AccountDetail, Balance, CardTransaction, StatementListItem
+from mcp_server_tochka_bank.models import Account, Balance, CardTransaction, StatementListItem
 from mcp_server_tochka_bank.server import mcp
 
 MOCK_ACCOUNT = {"accountId": "40702810100000000001/044525000", "customerCode": "100000001", "status": "Enabled", "currency": "RUB"}
@@ -15,7 +15,7 @@ MOCK_ACCOUNT = {"accountId": "40702810100000000001/044525000", "customerCode": "
 @pytest.mark.anyio
 async def test_tochka_account_detail():
     mock_detail = {"accountId": "40702810100000000001/044525000", "customerCode": "100000001", "status": "Enabled", "currency": "RUB"}
-    AccountDetail.model_validate(mock_detail)
+    Account.model_validate(mock_detail)
 
     with patch("mcp_server_tochka_bank.server.TochkaAPI") as MockAPI:
         instance = MockAPI.return_value
@@ -26,7 +26,7 @@ async def test_tochka_account_detail():
             result = await session.call_tool("tochka_account_detail", {})
             assert not result.isError
             data = json.loads(result.content[0].text)
-            AccountDetail.model_validate(data)
+            Account.model_validate(data)
             assert data["accountId"] == "40702810100000000001/044525000"
 
 

@@ -2,15 +2,18 @@
 
 import sys
 
-__version__ = "0.5.0"
+__version__ = "0.5.1"
 
 
 def main():
-    if len(sys.argv) > 1 and not sys.argv[1].startswith("-"):
+    if len(sys.argv) > 1 and sys.argv[1] in ("--version", "-V"):
+        print(f"mcp-server-tochka-bank {__version__}")
+    elif len(sys.argv) > 1 and not sys.argv[1].startswith("-"):
         from .cli import main as cli_main
         cli_main()
-    elif "--version" in sys.argv:
-        print(f"mcp-server-tochka-bank {__version__}")
+    elif "--help" in sys.argv or "-h" in sys.argv:
+        from .cli import main as cli_main
+        cli_main()
     else:
         from .server import mcp
         mcp.run(transport="stdio")

@@ -1,6 +1,7 @@
 """Тест: tochka_invoice + tochka_download_invoice."""
 
 import json
+import os
 import tempfile
 from unittest.mock import patch
 
@@ -68,9 +69,10 @@ async def test_tochka_download_invoice():
         instance.get_first_account.return_value = MOCK_ACCOUNT
         instance.download_invoice.return_value = b"%PDF-1.4 fake content"
 
-        with tempfile.NamedTemporaryFile(suffix=".pdf", delete=False) as f:
+        with tempfile.NamedTemporaryFile(suffix=".pdf", delete=False, dir="/tmp") as f:
             output_path = f.name
 
+        resolved_path = os.path.realpath(output_path)
         async with create_connected_server_and_client_session(mcp._mcp_server) as session:
             result = await session.call_tool("tochka_download_invoice", {
                 "document_id": "fbc0e703-248d-4083-bfaa-7061e8bc4b18",
@@ -78,7 +80,7 @@ async def test_tochka_download_invoice():
             })
             assert not result.isError
             data = json.loads(result.content[0].text)
-            assert data["path"] == output_path
+            assert data["path"] == resolved_path
 
-            with open(output_path, "rb") as f:
+            with open(resolved_path, "rb") as f:
                 assert f.read() == b"%PDF-1.4 fake content"
