@@ -41,8 +41,10 @@ async def test_tochka_acquiring_payment_create():
         instance.create_acquiring_payment.return_value = mock_response
 
         async with create_connected_server_and_client_session(mcp._mcp_server) as session:
-            payload = json.dumps({"Data": {"customerCode": "100000001", "amount": 2000, "currency": "RUB"}})
-            result = await session.call_tool("tochka_acquiring_payment_create", {"payload_json": payload})
+            result = await session.call_tool("tochka_acquiring_payment_create", {
+                "customer_code": "100000001", "amount": 2000, "purpose": "Test payment",
+                "payment_mode": ["sbp", "card"],
+            })
             assert not result.isError
             data = json.loads(result.content[0].text)
             AcquiringPayment.model_validate(data.get("Data", {}))
@@ -82,7 +84,9 @@ async def test_tochka_acquiring_payment_refund():
         instance.refund_acquiring_payment.return_value = mock_response
 
         async with create_connected_server_and_client_session(mcp._mcp_server) as session:
-            result = await session.call_tool("tochka_acquiring_payment_refund", {"operation_id": "op-001"})
+            result = await session.call_tool("tochka_acquiring_payment_refund", {
+                "operation_id": "op-001", "amount": 1500.0,
+            })
             assert not result.isError
 
 
@@ -94,8 +98,12 @@ async def test_tochka_acquiring_payment_with_receipt():
         instance.create_acquiring_payment_with_receipt.return_value = mock_response
 
         async with create_connected_server_and_client_session(mcp._mcp_server) as session:
-            payload = json.dumps({"Data": {"customerCode": "100000001", "amount": 3000}})
-            result = await session.call_tool("tochka_acquiring_payment_with_receipt", {"payload_json": payload})
+            items = json.dumps([{"name": "Test item", "amount": 3000, "quantity": 1}])
+            result = await session.call_tool("tochka_acquiring_payment_with_receipt", {
+                "customer_code": "100000001", "amount": 3000, "purpose": "Test payment",
+                "payment_mode": ["card"], "client_email": "test@example.com",
+                "items_json": items,
+            })
             assert not result.isError
 
 
