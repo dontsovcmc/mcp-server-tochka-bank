@@ -5,16 +5,22 @@ from unittest.mock import patch
 
 import pytest
 from mcp.shared.memory import create_connected_server_and_client_session
-from mcp.types import TextContent
 
 from mcp_server_tochka_bank.models import Account, Balance, BalanceToolResult
 from mcp_server_tochka_bank.server import mcp
 
-MOCK_ACCOUNTS = [{"accountId": "40702810100000000001/044525000", "customerCode": "100000001", "status": "Enabled", "currency": "RUB"}]
+MOCK_ACCOUNTS = [{
+    "accountId": "40702810100000000001/044525000",
+    "customerCode": "100000001", "status": "Enabled", "currency": "RUB",
+}]
 
 MOCK_BALANCES = [
-    {"accountId": "40702810100000000001/044525000", "type": "ClosingAvailable", "creditDebitIndicator": "Credit", "dateTime": "2026-04-16T10:00:00+00:00", "Amount": {"amount": 50000.00, "currency": "RUB"}},
-    {"accountId": "40702810100000000001/044525000", "type": "Expected", "creditDebitIndicator": "Credit", "dateTime": "2026-04-16T10:00:00+00:00", "Amount": {"amount": 0.0, "currency": "RUB"}},
+    {"accountId": "40702810100000000001/044525000", "type": "ClosingAvailable",
+     "creditDebitIndicator": "Credit", "dateTime": "2026-04-16T10:00:00+00:00",
+     "Amount": {"amount": 50000.00, "currency": "RUB"}},
+    {"accountId": "40702810100000000001/044525000", "type": "Expected",
+     "creditDebitIndicator": "Credit", "dateTime": "2026-04-16T10:00:00+00:00",
+     "Amount": {"amount": 0.0, "currency": "RUB"}},
 ]
 
 

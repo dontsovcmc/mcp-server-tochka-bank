@@ -1,8 +1,8 @@
-"""Тесты: tochka_delete_invoice, tochka_send_invoice_email, tochka_delete_closing_document, tochka_send_closing_document_email, tochka_download_closing_document."""
+"""Тесты: invoice/closing-document extras (delete, email, download)."""
 
 import json
 import os
-from unittest.mock import patch, mock_open
+from unittest.mock import mock_open, patch
 
 import pytest
 from mcp.shared.memory import create_connected_server_and_client_session
@@ -65,7 +65,8 @@ async def test_tochka_send_closing_document_email():
                 "document_id": "doc-uuid-002", "email": "buyer@example.com",
             })
             assert not result.isError
-            instance.send_closing_document_email.assert_called_once_with("100000001", "doc-uuid-002", "buyer@example.com")
+            instance.send_closing_document_email.assert_called_once_with(
+                "100000001", "doc-uuid-002", "buyer@example.com")
 
 
 @pytest.mark.anyio

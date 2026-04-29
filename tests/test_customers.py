@@ -9,7 +9,6 @@ from mcp.shared.memory import create_connected_server_and_client_session
 from mcp_server_tochka_bank.models import Customer
 from mcp_server_tochka_bank.server import mcp
 
-
 MOCK_CUSTOMERS = [
     {"customerCode": "100000001", "name": "ИП Иванов Иван Иванович", "inn": "770000000001", "type": "ip"},
     {"customerCode": "100000002", "name": "ООО Тест", "inn": "770000000002", "type": "company"},

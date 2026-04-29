@@ -26,25 +26,25 @@ class TochkaAPI:
     def _get(self, path: str, **kwargs) -> dict:
         resp = self.session.get(f"{BASE_URL}{path}", timeout=30, **kwargs)
         if not resp.ok:
-            raise RuntimeError(f"GET {path} -> {resp.status_code}: {resp.text}")
+            raise RuntimeError(f"GET {path} -> {resp.status_code}")
         return resp.json()
 
     def _post(self, path: str, payload: dict, **kwargs) -> dict:
         resp = self.session.post(f"{BASE_URL}{path}", json=payload, timeout=30, **kwargs)
         if not resp.ok:
-            raise RuntimeError(f"POST {path} -> {resp.status_code}: {resp.text}")
+            raise RuntimeError(f"POST {path} -> {resp.status_code}")
         return resp.json()
 
     def _delete(self, path: str, **kwargs) -> dict:
         resp = self.session.delete(f"{BASE_URL}{path}", timeout=30, **kwargs)
         if not resp.ok:
-            raise RuntimeError(f"DELETE {path} -> {resp.status_code}: {resp.text}")
+            raise RuntimeError(f"DELETE {path} -> {resp.status_code}")
         return resp.json()
 
     def _get_bytes(self, path: str, **kwargs) -> bytes:
         resp = self.session.get(f"{BASE_URL}{path}", timeout=30, **kwargs)
         if not resp.ok:
-            raise RuntimeError(f"GET {path} -> {resp.status_code}: {resp.text}")
+            raise RuntimeError(f"GET {path} -> {resp.status_code}")
         return resp.content
 
     # --- Счета ---

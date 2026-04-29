@@ -1,12 +1,9 @@
 """Тесты локального справочника товаров: goods_list, goods_add, goods_remove."""
 
 import json
-import os
-import tempfile
 
 import pytest
 from mcp.shared.memory import create_connected_server_and_client_session
-from mcp.types import TextContent
 
 from mcp_server_tochka_bank import goods
 from mcp_server_tochka_bank.server import mcp

@@ -14,7 +14,9 @@ MOCK_ACCOUNT = {"accountId": "40702810100000000001/044525000", "customerCode": "
 
 @pytest.mark.anyio
 async def test_tochka_acquiring_payments():
-    mock_response = {"Data": {"operations": [{"operationId": "op-001", "status": "APPROVED", "amount": 1500.0, "currency": "RUB"}]}}
+    mock_response = {"Data": {"operations": [
+        {"operationId": "op-001", "status": "APPROVED", "amount": 1500.0, "currency": "RUB"},
+    ]}}
     AcquiringPayment.model_validate(mock_response["Data"]["operations"][0])
 
     with patch("mcp_server_tochka_bank.server.TochkaAPI") as MockAPI:
